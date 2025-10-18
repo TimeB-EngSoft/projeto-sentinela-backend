@@ -1,21 +1,20 @@
 package com.Projeto.Sentinela.Entities;
 
-public class UsuarioPendente extends Usuario{
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import lombok.Getter;
+
+@Getter
+@Entity
+@DiscriminatorValue("NaoValidado")
+public class UsuarioPendente extends UserAbstract {
     private String justificativa;
 
-    public String getJustificativa() {
-        return justificativa;
-    }
-
-    public void setJustificativa(String justificativa) {
-        this.justificativa = justificativa;
-    }
+    public UsuarioPendente() {}
 
     public UsuarioPendente(String nome, String email, String cargo, String cpf, Ente ente, String justificativa) {
         super(nome, email, cargo, cpf, ente);
         this.justificativa = justificativa;
-
-
     }
 
 
