@@ -12,8 +12,8 @@ public class UsuarioPendente extends UserAbstract {
 
     public UsuarioPendente() {}
 
-    public UsuarioPendente(String nome, String email, String cargo, String cpf, Ente ente, String justificativa) {
-        super(nome, email, cargo, cpf, ente);
+    public UsuarioPendente(String nome, String email, String cargo, String cpf, Instituicao instituicao, String justificativa) {
+        super(nome, email, cargo, cpf, instituicao);
         this.justificativa = justificativa;
     }
 

@@ -1,0 +1,5 @@
+package com.Projeto.Sentinela.Enums;
+
+public enum EnumCargo {
+    SECRETARIA, GESTOR_DA_SECRETARIA, GESTOR_DA_INSTITUICAO, USUARIO_INSTITUICAO,USUARIO_COMUM
+}

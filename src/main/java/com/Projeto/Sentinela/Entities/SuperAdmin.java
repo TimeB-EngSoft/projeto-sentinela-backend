@@ -13,22 +13,22 @@ public class SuperAdmin extends UserAbstract {
 
 //Metodos só funcionarão apos criar a package/classes de repositorios
 
-    public GestorSecretaria cadastrarGestor(String nome, String email, String cargo, String cpf, Ente ente){
-        return new GestorSecretaria(nome, email, cargo, cpf, ente);
+    public GestorSecretaria cadastrarGestor(String nome, String email, String cargo, String cpf, Instituicao instituicao){
+        return new GestorSecretaria(nome, email, cargo, cpf, instituicao);
     }
 
-    public UserAbstract cadastrarUser(String nome, String email, String cargo, String cpf, Ente ente) {
+    public UserAbstract cadastrarUser(String nome, String email, String cargo, String cpf, Instituicao instituicao) {
         if(cargo.equalsIgnoreCase("secretaria")){
-            return new UsuarioSecretaria(nome,email,cargo,cpf,ente);
+            return new UsuarioSecretaria(nome,email,cargo,cpf, instituicao);
         }
-        return new UsuarioEnte(nome, email, cargo, cpf, ente);
+        return new UsuarioEnte(nome, email, cargo, cpf, instituicao);
     }
 
-    public Ente cadastrarEnte(String areaAtuacao, String descricao) {
-        return new Ente(areaAtuacao,descricao);
+    public Instituicao cadastrarEnte(String areaAtuacao, String descricao) {
+        return new Instituicao(areaAtuacao,descricao);
     }
 
-    public Boolean descadastrarEnte(Ente ente) {
+    public Boolean descadastrarEnte(Instituicao instituicao) {
         return true;
     }
 

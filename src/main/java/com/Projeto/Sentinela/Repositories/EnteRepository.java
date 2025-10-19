@@ -1,16 +1,16 @@
 package com.Projeto.Sentinela.Repositories;
 
-import com.Projeto.Sentinela.Entities.Ente;
+import com.Projeto.Sentinela.Entities.Instituicao;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface EnteRepository extends JpaRepository<Ente, Long> {
+public interface EnteRepository extends JpaRepository<Instituicao, Long> {
 
-    List<Ente> findByAreaAtuacaoContainingIgnoreCase(String areaAtuacao);
+    List<Instituicao> findByAreaAtuacaoContainingIgnoreCase(String areaAtuacao);
 
-    List<Ente> findByDescricaoContainingIgnoreCase(String descricao);
+    List<Instituicao> findByDescricaoContainingIgnoreCase(String descricao);
 
-    List<Ente> findByValidacao(Integer validacao);
+    List<Instituicao> findByValidacao(Integer validacao);
 
 }

@@ -8,8 +8,8 @@ import jakarta.persistence.Entity;
 @DiscriminatorValue("Ente")
 public class UsuarioEnte extends UserAbstract {
 
-    public UsuarioEnte(String nome, String email, String cargo, String cpf, Ente ente) {
-        super(nome, email, cargo, cpf, ente);
+    public UsuarioEnte(String nome, String email, String cargo, String cpf, Instituicao instituicao) {
+        super(nome, email, cargo, cpf, instituicao);
     }
 
     public UsuarioEnte() {

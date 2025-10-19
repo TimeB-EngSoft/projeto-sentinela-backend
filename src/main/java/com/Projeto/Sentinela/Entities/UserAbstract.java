@@ -1,8 +1,13 @@
 package com.Projeto.Sentinela.Entities;
 
+import com.Projeto.Sentinela.Enums.EnumCargo;
+import com.Projeto.Sentinela.Enums.EnumUsuarioStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -18,20 +23,20 @@ public abstract class UserAbstract {
 
     private String nome;
     private String email;
-    private String cargo;
+
+    @Enumerated(EnumType.STRING)
+    private EnumCargo cargo;
+
     private String cpf;
-    @ManyToOne
-    @JoinColumn(name = "ente_id")
-    private Ente ente;
+    private String telefone;
+    private String senha;
+    private LocalDate dataNascimento;
+    private LocalDateTime dataCadastro;
+    private LocalDateTime dataAtualizacao;
 
+    @Enumerated(EnumType.STRING)
+    private EnumUsuarioStatus status;
 
-    public UserAbstract(String nome, String email, String cargo, String cpf, Ente ente) {
-        this.nome = nome;
-        this.email = email;
-        this.cargo = cargo;
-        this.cpf = cpf;
-        this.ente = ente;
-    }
 
     public UserAbstract() {
 

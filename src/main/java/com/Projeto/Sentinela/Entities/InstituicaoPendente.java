@@ -5,12 +5,12 @@ import jakarta.persistence.Entity;
 
 @Entity
 @DiscriminatorValue("0")
-public class EntePendente extends Ente{
+public class InstituicaoPendente extends Instituicao {
     private String justificativa;
 
-    public EntePendente(String areaAtuacao, String descricao, String justificativa) {
+    public InstituicaoPendente(String areaAtuacao, String descricao, String justificativa) {
         super(areaAtuacao, descricao);
         this.justificativa = justificativa;
     }
-    public EntePendente() {}
+    public InstituicaoPendente() {}
 }

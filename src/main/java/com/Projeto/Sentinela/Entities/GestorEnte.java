@@ -4,21 +4,17 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
 @Entity
-@DiscriminatorValue("GestorEnte")
+@DiscriminatorValue("GESTOR_DA_INSTITUICAO")
 public class GestorEnte extends UserAbstract {
 
-
-    public GestorEnte(String nome, String email, String cargo, String cpf, Ente ente) {
-        super(nome, email, cargo, cpf, ente);
-    }
 
     public GestorEnte() {
     }
 
     //Metodos só funcionarão apos criar a package/classes de repositorios
 
-    public UserAbstract cadastrarUser(String nome, String email, String cargo, String cpf, Ente ente) {
-        return new UsuarioEnte(nome,email,cargo,cpf,ente);
+    public UserAbstract cadastrarUser(String nome, String email, String cargo, String cpf, Instituicao instituicao) {
+        return new UsuarioEnte(nome,email,cargo,cpf, instituicao);
     }
     public Boolean descadastrarUser(UserAbstract usuario) {
         return true;
