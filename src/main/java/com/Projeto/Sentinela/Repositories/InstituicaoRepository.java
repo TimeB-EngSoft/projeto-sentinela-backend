@@ -5,7 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface EnteRepository extends JpaRepository<Instituicao, Long> {
+public interface InstituicaoRepository extends JpaRepository<Instituicao, Long> {
+
+    @org.springframework.data.jpa.repository.Query("SELECT i.id FROM Instituicao i WHERE i.nome = :nome")
+    Long findIdByNome(String nome);
+
+    Instituicao findByNomeContainingIgnoreCase(String nome);
 
     List<Instituicao> findByAreaAtuacaoContainingIgnoreCase(String areaAtuacao);
 

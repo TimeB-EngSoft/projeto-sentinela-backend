@@ -1,11 +1,14 @@
 package com.Projeto.Sentinela.Entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.Projeto.Sentinela.Enums.EnumFonte;
+import com.Projeto.Sentinela.Enums.EnumPrioridade;
+import com.Projeto.Sentinela.Enums.EnumStatusConflito;
+import com.Projeto.Sentinela.Enums.EnumTipoDeDenuncia;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -16,17 +19,56 @@ public class Conflito {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String report;
-    private String localizacao;
-    private Integer numAfetados;
-    private String statusConflito;
+    @Enumerated(EnumType.STRING)
+    private EnumFonte fonteDenuncia;
+    private String tituloConflito;
+    @Enumerated(EnumType.STRING)
+    private EnumTipoDeDenuncia tipoConflito;
+    private LocalDateTime dataInicio;
+    private LocalDateTime dataFim;
+    private String descricaoConflito;
+    private String parteReclamante;
+    private String parteReclamada;
+    private String gruposVulneraveis;
+    @Enumerated(EnumType.STRING)
+    private EnumStatusConflito status;
+    @Enumerated(EnumType.STRING)
+    private EnumPrioridade prioridade;
 
-    public Conflito(String report, String localizacao, Integer numAfetados, String statusConflito) {
-        this.report = report;
-        this.localizacao = localizacao;
-        this.numAfetados = numAfetados;
-        this.statusConflito = statusConflito;
-    }
+    @OneToOne
+    @JoinColumn(name = "id_Instituição", referencedColumnName = "id")
+    private Instituicao instituicao;
+
+    private Integer quantidadePessoasAfetadas;
+
+    @OneToOne
+    @JoinColumn(name = "id_Denuncia_Origem", referencedColumnName = "id")
+    private Denuncia denunciaOrigem;
 
     public Conflito() {}
+
+    public void atualizarStatus(EnumStatusConflito novoStatus) {
+        if (novoStatus == null) {
+            throw new IllegalArgumentException("O status do conflito não pode ser nulo.");
+        }
+
+        if (this.status == EnumStatusConflito.CANCELADO && novoStatus == EnumStatusConflito.ATIVO) {
+            throw new IllegalStateException("Não é permitido reabrir um conflito cancelado dessa forma.");
+        }
+
+        this.status = novoStatus;
+
+        if (novoStatus == EnumStatusConflito.CANCELADO) {
+            this.dataFim = LocalDateTime.now();
+        }
+    }
+
+    public void definirPrioridade(EnumPrioridade novaPrioridade) {
+        if (novaPrioridade == null) {
+            throw new IllegalArgumentException("A prioridade do conflito não pode ser nula.");
+        }
+
+        this.prioridade = novaPrioridade;
+    }
 }
+

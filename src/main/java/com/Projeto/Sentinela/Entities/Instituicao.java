@@ -36,4 +36,12 @@ public class Instituicao {
     private LocalDateTime dataCadastro;
 
     public Instituicao() {}
+
+    public int getNumUsuarios(){
+        return 1;
+        //implementação futura, com captação do número a partir do repositorio de usuarios
+    }
+    public boolean associarGestor(){
+        return true;
+    }
 }

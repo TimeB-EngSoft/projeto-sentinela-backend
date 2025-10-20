@@ -37,6 +37,10 @@ public abstract class UserAbstract {
     @Enumerated(EnumType.STRING)
     private EnumUsuarioStatus status;
 
+    @OneToOne
+    @JoinColumn(name = "id_instituicao", referencedColumnName = "id")
+    private Instituicao instituicao;
+
 
     public UserAbstract() {
 
