@@ -7,7 +7,5 @@ import java.util.List;
 
 public interface DenunciaRepository extends JpaRepository<Denuncia, Long> {
 
-    List<Denuncia> findByLocalizacaoContainingIgnoreCase(String localizacao);
-
     List<Denuncia> findByNumAfetadosGreaterThan(Integer numAfetados);
 }

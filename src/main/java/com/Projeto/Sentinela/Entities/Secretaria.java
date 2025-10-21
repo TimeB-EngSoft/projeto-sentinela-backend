@@ -4,11 +4,13 @@ import com.Projeto.Sentinela.Enums.EnumCargo;
 import com.Projeto.Sentinela.Repositories.InstituicaoRepository;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Transient;
 
 @Entity
 @DiscriminatorValue("Secretaria")
 public class Secretaria extends GestorSecretaria {
 
+    @Transient
     InstituicaoRepository instituicaoRepository;
 
     public Boolean aprovarGestorSecretaria(Usuario user) {

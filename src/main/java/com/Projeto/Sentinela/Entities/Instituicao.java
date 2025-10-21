@@ -24,6 +24,8 @@ public class Instituicao {
     private String email;
     private String areaAtuacao;
     private String descricao;
+
+    @Column(name = "validacao", insertable = false, updatable = false)
     private Integer validacao;
 
     @Enumerated(EnumType.STRING)

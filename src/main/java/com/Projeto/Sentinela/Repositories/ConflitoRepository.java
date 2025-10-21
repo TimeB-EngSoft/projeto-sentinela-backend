@@ -11,7 +11,5 @@ public interface ConflitoRepository extends JpaRepository<Conflito, Long> {
 
     List<Conflito> findByStatusConflito(String status);
 
-    List<Conflito> findByLocalizacaoContainingIgnoreCase(String localizacao);
-
     List<Conflito> findByNumAfetadosGreaterThan(Integer numAfetados);
 }

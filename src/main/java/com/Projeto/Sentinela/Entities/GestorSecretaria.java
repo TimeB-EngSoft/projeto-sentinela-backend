@@ -7,6 +7,7 @@ import com.Projeto.Sentinela.Enums.EnumUsuarioStatus;
 import com.Projeto.Sentinela.Repositories.InstituicaoRepository;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Transient;
 
 import java.util.ArrayList;
 
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 @DiscriminatorValue("GestorSecretaria")
 public class GestorSecretaria extends UserAbstract {
 
+    @Transient
     InstituicaoRepository instituicaoRepository;
 
     private ArrayList<Conflito> conflitosRegistrados;

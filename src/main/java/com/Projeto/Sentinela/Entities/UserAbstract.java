@@ -25,6 +25,7 @@ public abstract class UserAbstract {
     private String email;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "cargo", insertable = false, updatable = false)
     private EnumCargo cargo;
 
     private String cpf;
