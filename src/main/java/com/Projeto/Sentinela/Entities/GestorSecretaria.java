@@ -12,7 +12,7 @@ import jakarta.persistence.Transient;
 import java.util.ArrayList;
 
 @Entity
-@DiscriminatorValue("GestorSecretaria")
+@DiscriminatorValue("GESTOR_DA_SECRETARIA")
 public class GestorSecretaria extends UserAbstract {
 
     @Transient
@@ -20,7 +20,7 @@ public class GestorSecretaria extends UserAbstract {
 
     private ArrayList<Conflito> conflitosRegistrados;
 
-    public Boolean aprovarGestorInstituicao(Usuario user, String nomeDaInstituicao) {
+    public Boolean aprovarGestorInstituicao(UsuarioInstituicao user, String nomeDaInstituicao) {
         if(user == null){
             throw new IllegalArgumentException("O usuário deve existir para ser aprovado");
         }
@@ -29,7 +29,7 @@ public class GestorSecretaria extends UserAbstract {
         return true;
     }
 
-    public Boolean aprovarUsuario(Usuario user, String instituicao){
+    public Boolean aprovarUsuario(UsuarioInstituicao user, String instituicao){
         if(user == null){
             throw new IllegalArgumentException("O usuario deve existir para ser aprovado");
         }

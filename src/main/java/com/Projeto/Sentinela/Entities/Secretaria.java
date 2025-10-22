@@ -7,13 +7,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Transient;
 
 @Entity
-@DiscriminatorValue("Secretaria")
+@DiscriminatorValue("SECRETARIA")
 public class Secretaria extends GestorSecretaria {
 
     @Transient
     InstituicaoRepository instituicaoRepository;
 
-    public Boolean aprovarGestorSecretaria(Usuario user) {
+    public Boolean aprovarGestorSecretaria(UsuarioInstituicao user) {
         if(user == null){
             throw new IllegalArgumentException("O usuario deve existir para ser aprovado");
         }

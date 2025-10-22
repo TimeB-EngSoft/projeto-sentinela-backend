@@ -20,7 +20,7 @@ public class GestorInstituicao extends UserAbstract {
     private ArrayList<Conflito> conflitosRegistrados;
 
 
-    public Boolean aprovarUsuario(Usuario user, String instituicao){
+    public Boolean aprovarUsuario(UsuarioInstituicao user, String instituicao){
         if(user == null){
             throw new IllegalArgumentException("O usuario deve existir para ser aprovado");
         }

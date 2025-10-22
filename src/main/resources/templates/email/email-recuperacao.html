@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>Recuperação de Senha - Projeto Sentinela</title>
+    <style>
+        :root { color-scheme: light dark; supported-color-schemes: light dark; }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f7;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        table.main-container {
+            max-width: 600px;
+            background-color: #FFFFFF;
+            border-radius: 8px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .brand-name {
+            color: #342010;
+            font-size: 28px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .title {
+            color: #D44716;
+            font-size: 26px;
+            font-weight: 600;
+            border-bottom: 3px solid #D44716;
+            padding-bottom: 15px;
+            display: inline-block;
+            margin-bottom: 25px;
+        }
+
+        .message {
+            font-size: 16px;
+            color: #342010;
+            line-height: 1.7;
+        }
+
+        /* ✅ Botão refinado com animação */
+        .button {
+            display: inline-block;
+            padding: 14px 35px;
+            background-color: #D44716;
+            color: #FFFFFF !important;
+            text-decoration: none !important;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
+            border: none;
+            text-align: center;
+            transition: all 0.25s ease-in-out;
+            box-shadow: 0 3px 8px rgba(212, 71, 22, 0.3);
+        }
+
+        .button:hover {
+            background-color: #b93b12 !important;
+            box-shadow: 0 4px 12px rgba(180, 60, 15, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .token-container {
+            background-color: #FFFFFF;
+            border: 1px dashed #C8BFAD;
+            border-radius: 8px;
+        }
+
+        .token-text {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 24px;
+            font-weight: bold;
+            color: #342010;
+            letter-spacing: 4px;
+        }
+
+        .contact-info a {
+            color: #D44716;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .contact-info a:hover {
+            color: #b93b12;
+            text-decoration: underline;
+        }
+
+        .footer-links a {
+            color: #342010;
+            text-decoration: none;
+            font-size: 14px;
+            margin: 0 10px;
+            transition: color 0.2s, text-decoration 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: #D44716;
+            text-decoration: underline;
+        }
+
+        .footer-text {
+            color: #888888;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body { background-color: #1C1712 !important; }
+            .dark-bg { background-color: #1C1712 !important; }
+            .brand-name { color: #D44716 !important; }
+            .message, .contact-info { color: #EAE6E1 !important; }
+            .token-container { background-color: #2c251e !important; border-color: #4A4540 !important; }
+            .token-text { color: #EAE6E1 !important; }
+            .dark-divider { background-color: #4A4540 !important; }
+            .footer-links a { color: #EAE6E1 !important; }
+            .footer-links a:hover { color: #D44716 !important; }
+            .footer-text { color: #A39E99 !important; }
+            .button {
+                background-color: #D44716 !important;
+                color: #FFFFFF !important;
+                box-shadow: 0 3px 8px rgba(212, 71, 22, 0.4);
+            }
+        }
+    </style>
+</head>
+<body>
+<table width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f4f7;" class="dark-bg">
+    <tr>
+        <td align="center" style="padding: 40px 10px;">
+            <table class="main-container" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td align="center" style="padding: 30px 20px;">
+                        <table>
+                            <tr>
+                                <td align="center">
+                                    <img src="cid:logoSentinela" alt="Logo Projeto Sentinela" width="60" style="margin-right: 10px; vertical-align: middle;">
+                                </td>
+                                <td class="brand-name" style="vertical-align: middle;">SENTINELA</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr><td align="center"><h1 class="title">PEDIDO DE RECUPERAÇÃO DE SENHA</h1></td></tr>
+                <tr>
+                    <td align="center" style="padding: 0 40px 40px 40px;">
+                        <p class="message">
+                            Olá <strong>${userName}</strong>,<br><br>
+                            Recebemos uma solicitação de recuperação de senha. Use o botão abaixo para redefinir sua senha.
+                        </p>
+                        <p>
+                            <a href="${redirectUrl}" target="_blank" class="button">Redefinir senha</a>
+                        </p>
+                        <p class="message" style="font-size: 14px;">Ou use este código de verificação:</p>
+                        <div class="token-container" style="display:inline-block; padding:15px 25px;">
+                            <span class="token-text">${token}</span>
+                        </div>
+                        <p class="message" style="font-size: 14px; margin-top:40px;">
+                            Se você não solicitou esta recuperação, por favor, ignore este e-mail.
+                        </p>
+                        <div style="height: 1px; background-color: #e0e0e0; margin: 40px 0;" class="dark-divider"></div>
+                        <p class="message contact-info">
+                            Dúvidas? Fale conosco em <a href="mailto:contato@projetosentinela.com">contato@projetosentinela.com</a>
+                        </p>
+                        <div class="footer-links" style="margin-top:30px;">
+                            <a href="#">Início</a> | <a href="#">Sobre Nós</a> | <a href="#">Contato</a>
+                        </div>
+                        <p class="footer-text" style="margin-top:20px;">© 2025 Projeto Sentinela. Todos os direitos reservados.</p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
