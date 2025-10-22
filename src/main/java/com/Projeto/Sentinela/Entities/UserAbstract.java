@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "cargo", discriminatorType = DiscriminatorType.STRING)
+@Table (name = "Usuarios")
 public abstract class UserAbstract {
 
 

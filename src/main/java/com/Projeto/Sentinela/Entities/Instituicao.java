@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "validacao", discriminatorType = DiscriminatorType.INTEGER)
+@Table (name = "Instituicoes")
 public class Instituicao {
 
     @Id
