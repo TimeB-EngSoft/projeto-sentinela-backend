@@ -38,7 +38,7 @@ public class ServicoAutenticacao {
     private InstituicaoRepository instituicaoRepository;
 
     @Transactional
-    public void solicitarRecuperarSenha(String email) throws MessagingException {
+    public void solicitarRecuperarSenha(String email) {
         Optional<UserAbstract> user = userRepository.findByEmail(email);
 
         if (user.isEmpty()) {
@@ -183,5 +183,23 @@ public class ServicoAutenticacao {
 
         userRepository.save(user);
     }
+
+    public UserAbstract login(String email, String senha) {
+        UserAbstract usuario = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+
+        if (usuario.getStatus() != EnumUsuarioStatus.ATIVO) {
+            throw new RuntimeException("O cadastro ainda não foi aprovado ou está inativo.");
+        }
+
+        if (!usuario.getSenha().equals(senha)) {
+            throw new RuntimeException("Senha incorreta.");
+        }
+
+        userRepository.save(usuario);
+
+        return usuario;
+    }
+
 
 }

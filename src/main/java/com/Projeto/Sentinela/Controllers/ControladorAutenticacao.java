@@ -1,5 +1,6 @@
 package com.Projeto.Sentinela.Controllers;
 
+import com.Projeto.Sentinela.Entities.UserAbstract;
 import com.Projeto.Sentinela.Services.ServicoAutenticacao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -49,9 +50,23 @@ public class ControladorAutenticacao {
 
 
     @PostMapping("/login")
-    public ResponseEntity<String> efetuarLogin(@RequestParam String email, @RequestParam String senha) {
-        return ResponseEntity.ok("Login efetuado para o e-mail: " + email);
+    public ResponseEntity<?> efetuarLogin(@RequestParam String email, @RequestParam String senha) {
+        try {
+            UserAbstract usuario = servicoAutenticacao.login(email, senha);
+
+            String mensagem = String.format(
+                    "Login efetuado com sucesso! Bem-vindo, %s (%s).",
+                    usuario.getNome(),
+                    usuario.getCargo()
+            );
+
+            return ResponseEntity.ok(mensagem);
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("Erro ao efetuar login: " + e.getMessage());
+        }
     }
+
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout() {
