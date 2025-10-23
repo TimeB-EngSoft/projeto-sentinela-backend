@@ -1,7 +1,9 @@
 package com.Projeto.Sentinela.Services;
 
-import com.Projeto.Sentinela.Entities.PasswordResetToken;
-import com.Projeto.Sentinela.Entities.UserAbstract;
+import com.Projeto.Sentinela.Entities.*;
+import com.Projeto.Sentinela.Enums.EnumCargo;
+import com.Projeto.Sentinela.Enums.EnumUsuarioStatus;
+import com.Projeto.Sentinela.Repositories.InstituicaoRepository;
 import com.Projeto.Sentinela.Repositories.PasswordResetTokenRepository;
 import com.Projeto.Sentinela.Repositories.UserRepository;
 import jakarta.mail.MessagingException;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,6 +34,8 @@ public class ServicoAutenticacao {
 
     @Autowired
     private JavaMailSender mailSender;
+    @Autowired
+    private InstituicaoRepository instituicaoRepository;
 
     @Transactional
     public void solicitarRecuperarSenha(String email) throws MessagingException {
@@ -122,4 +127,61 @@ public class ServicoAutenticacao {
         tokenRepository.delete(resetToken);
         System.out.println("✅ Senha redefinida com sucesso para o usuário: " + user.getEmail());
     }
+
+    public void cadastroParcial(String nome, String email, String instituicao, String cargo, String justificativa) {
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new RuntimeException("E-mail já cadastrado.");
+        }
+
+        UserAbstract usuario = null;
+        switch (cargo){ // dar uma olhada depois no nome dos cases, por questao de estetica!
+            case "Gestor Secretaria": usuario = new GestorSecretaria();
+            break;
+            case "Gestor Instituicao": usuario = new GestorInstituicao();
+            break;
+            case "Usuario Secretaria": usuario = new UsuarioSecretaria();
+            break;
+            case "Usuario Instituicao": usuario = new UsuarioInstituicao();
+            break;
+            default: break;
+
+        }
+
+        if (usuario == null) {
+            throw new IllegalArgumentException("O usuário precisa existir para ser cadastrado");
+        }
+        usuario.setNome(nome);
+        usuario.setEmail(email);
+        usuario.setInstituicao(instituicaoRepository.findByNomeContainingIgnoreCase(instituicao));
+        usuario.setCargo(EnumCargo.valueOf(
+                cargo.toUpperCase()
+                        .replace(" DA ", " ") // remove o “DA” antes de virar underscore
+                        .replace(" DE ", " ") // opcional, cobre casos tipo “Gestor de Secretaria”
+                        .replace(" ", "_")
+        ));
+
+        usuario.setJustificativa(justificativa);
+        usuario.setStatus(EnumUsuarioStatus.PENDENTE);
+        usuario.setDataCadastro(LocalDateTime.now());
+
+        userRepository.save(usuario);
+    }
+
+    public void cadastroCompleto(String email, String senha, String telefone, String dataNascimento, String cpf) {
+        UserAbstract user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+
+        if (user.getStatus() != EnumUsuarioStatus.ATIVO) {  // ao gestor aceitar o usuario, o status dele passa automaticamente para ATIVO (lembrar de implementar no futuro)
+            throw new RuntimeException("O cadastro ainda não foi aprovado.");
+        }
+
+        user.setSenha(senha);
+        user.setTelefone(telefone);
+        user.setDataNascimento(LocalDate.parse(dataNascimento));
+        user.setDataAtualizacao(LocalDateTime.now());
+        user.setCpf(cpf);
+
+        userRepository.save(user);
+    }
+
 }

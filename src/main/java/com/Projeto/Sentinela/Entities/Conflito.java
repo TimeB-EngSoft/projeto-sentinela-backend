@@ -36,7 +36,7 @@ public class Conflito {
     @Enumerated(EnumType.STRING)
     private EnumPrioridade prioridade;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "id_Instituição", referencedColumnName = "id")
     private Instituicao instituicao;
 

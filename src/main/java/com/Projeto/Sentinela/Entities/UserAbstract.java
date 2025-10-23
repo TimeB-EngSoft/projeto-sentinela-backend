@@ -35,11 +35,12 @@ public abstract class UserAbstract {
     private LocalDate dataNascimento;
     private LocalDateTime dataCadastro;
     private LocalDateTime dataAtualizacao;
+    private String justificativa;
 
     @Enumerated(EnumType.STRING)
     private EnumUsuarioStatus status;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "id_instituicao", referencedColumnName = "id")
     private Instituicao instituicao;
 

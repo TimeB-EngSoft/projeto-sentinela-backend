@@ -11,7 +11,7 @@ import jakarta.persistence.Transient;
 import java.util.ArrayList;
 
 @Entity
-@DiscriminatorValue("GESTOR_DA_INSTITUICAO")
+@DiscriminatorValue("GESTOR_INSTITUICAO")
 public class GestorInstituicao extends UserAbstract {
 
     @Transient

@@ -18,7 +18,7 @@ public class Secretaria extends GestorSecretaria {
             throw new IllegalArgumentException("O usuario deve existir para ser aprovado");
         }
         user.setInstituicao(instituicaoRepository.findByNomeContainingIgnoreCase("Secretaria"));
-        user.setCargo(EnumCargo.GESTOR_DA_SECRETARIA);
+        user.setCargo(EnumCargo.GESTOR_SECRETARIA);
         return true;
     }
 }
