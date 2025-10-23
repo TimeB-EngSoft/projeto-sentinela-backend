@@ -201,5 +201,18 @@ public class ServicoAutenticacao {
         return usuario;
     }
 
+    public void logout(String email) {
+        Optional<UserAbstract> userOpt = userRepository.findByEmail(email);
+
+        if (userOpt.isPresent()) {
+            UserAbstract user = userOpt.get();
+            userRepository.save(user);
+            System.out.println("✅ Logout registrado para: " + email);
+        } else {
+            System.out.println("⚠️ Logout solicitado para e-mail não encontrado: " + email);
+        }
+    }
+
+
 
 }

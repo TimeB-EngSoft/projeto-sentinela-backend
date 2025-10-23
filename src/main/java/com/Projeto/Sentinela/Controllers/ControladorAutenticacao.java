@@ -69,8 +69,11 @@ public class ControladorAutenticacao {
 
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout() {
-        return ResponseEntity.ok("Logout efetuado com sucesso");
+    public ResponseEntity<String> logout(@RequestParam(required = false) String email) {
+        if (email != null) {
+            servicoAutenticacao.logout(email);
+        }
+        return ResponseEntity.ok("Logout efetuado com sucesso!");
     }
 
     @PostMapping("/recuperar")
