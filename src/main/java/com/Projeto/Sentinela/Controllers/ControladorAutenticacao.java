@@ -76,6 +76,22 @@ public class ControladorAutenticacao {
         return ResponseEntity.ok("Logout efetuado com sucesso!");
     }
 
+    @PostMapping("/validar-token")
+    public ResponseEntity<String> validarToken(@RequestParam String token) {
+        try {
+            // Você precisará criar este método 'validarToken' no seu ServicoAutenticacao
+            boolean isTokenValido = servicoAutenticacao.validarToken(token);
+
+            if (isTokenValido) {
+                return ResponseEntity.ok("Token é válido.");
+            } else {
+                return ResponseEntity.badRequest().body("Token inválido ou expirado.");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro ao validar token: " + e.getMessage());
+        }
+    }
+
     @PostMapping("/recuperar")
     public ResponseEntity<String> recuperarSenha(@RequestParam String email) {
         try {

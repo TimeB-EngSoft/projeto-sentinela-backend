@@ -213,6 +213,24 @@ public class ServicoAutenticacao {
         }
     }
 
+    public boolean validarToken(String token) {
+        // Busca o token no repositório específico de tokens.
+        Optional<PasswordResetToken> resetTokenOpt = tokenRepository.findByToken(token);
 
+        // Se o token não for encontrado, ele é inválido.
+        if (resetTokenOpt.isEmpty()) {
+            return false;
+        }
+
+        PasswordResetToken resetToken = resetTokenOpt.get();
+
+        // Verifica se o token expirou. Se sim, é inválido.
+        if (resetToken.isExpired()) {
+            return false;
+        }
+
+        // Se encontrou e não expirou, o token é válido.
+        return true;
+    }
 
 }
