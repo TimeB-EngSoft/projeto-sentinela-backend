@@ -79,7 +79,6 @@ public class ControladorAutenticacao {
     @PostMapping("/validar-token")
     public ResponseEntity<String> validarToken(@RequestParam String token) {
         try {
-            // Você precisará criar este método 'validarToken' no seu ServicoAutenticacao
             boolean isTokenValido = servicoAutenticacao.validarToken(token);
 
             if (isTokenValido) {
