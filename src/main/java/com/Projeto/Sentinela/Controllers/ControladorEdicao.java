@@ -9,16 +9,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/edit")
 public class ControladorEdicao {
 
     @Autowired
     private ServicoEdicao servicoEdicao;
 
-    @PatchMapping("/{id}")
+    @PatchMapping("/{id}/user")
     public ResponseEntity<UserAbstract> atualizarUsuario(
             @PathVariable Long id,
             @RequestBody UpUserDTO dto) {
-
         try {
             UserAbstract atualizado = servicoEdicao.atualizarUser(id, dto);
             return ResponseEntity.ok(atualizado);
