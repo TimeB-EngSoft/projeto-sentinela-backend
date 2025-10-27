@@ -31,3 +31,12 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+# Evitar subir JARs manuais
+Sentinela-0.0.1-SNAPSHOT.jar
+
