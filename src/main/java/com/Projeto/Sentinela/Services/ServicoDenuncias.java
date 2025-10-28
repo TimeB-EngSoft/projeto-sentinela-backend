@@ -6,6 +6,7 @@ import com.Projeto.Sentinela.Enums.EnumFonte;
 import com.Projeto.Sentinela.Enums.EnumStatusDenuncia;
 import com.Projeto.Sentinela.Enums.EnumTipoDeDenuncia;
 import com.Projeto.Sentinela.Repositories.DenunciaRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -83,6 +84,47 @@ public class ServicoDenuncias {
     public Denuncia aprovarDenuncia(Long id, boolean aprovada) {
         Denuncia denuncia = buscarPorId(id);
         denuncia.serAprovada(aprovada);
+        return denunciaRepository.save(denuncia);
+    }
+
+    @Transactional
+    public Denuncia atualizarDenuncia(long id, DenunciaDTO dto){
+
+        Denuncia denuncia = denunciaRepository.findById(id).orElseThrow(()-> new RuntimeException("Denúncia não presente no sistema"));
+
+
+        if(!dto.getDescricaoDenuncia().isEmpty()){
+            denuncia.setDescricaoDenuncia(dto.getDescricaoDenuncia());
+        }
+
+        if(!dto.getDescricaoPartesEnvolvidas().isEmpty()){
+            denuncia.setDescricaoPartesEnvolvidas(dto.getDescricaoPartesEnvolvidas());
+        }
+
+        if(!dto.getTipoDenuncia().equals(denuncia.getTipoDenuncia())){
+            denuncia.setTipoDenuncia(dto.getTipoDenuncia());
+        }
+
+        if(!dto.getDataOcorrido().equals(denuncia.getDataOcorrido())){
+            denuncia.setDataOcorrido(dto.getDataOcorrido());
+        }
+
+        if(!dto.getEmailDenunciante().isEmpty()){
+            denuncia.setEmailDenunciante(dto.getEmailDenunciante());
+        }
+
+        if(!dto.getTelefoneDenunciante().isEmpty()){
+            denuncia.setTelefoneDenunciante(dto.getTelefoneDenunciante());
+        }
+
+        if(dto.getCpfDenunciante().isEmpty()){
+            denuncia.setCpfDenunciante(dto.getCpfDenunciante());
+        }
+
+        if(!dto.getTituloDenuncia().isEmpty()){
+            denuncia.setTituloDenuncia(dto.getTituloDenuncia());
+        }
+
         return denunciaRepository.save(denuncia);
     }
 }
