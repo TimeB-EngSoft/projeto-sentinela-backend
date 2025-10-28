@@ -26,4 +26,15 @@ public class ControladorEdicao {
             return ResponseEntity.badRequest().body(null);
         }
     }
+
+    @GetMapping("/{id}/user")
+    public ResponseEntity<UserAbstract> getData(@PathVariable long id ){
+        try{
+            UserAbstract a = servicoEdicao.getData(id);
+            return ResponseEntity.ok(a);
+        }catch(RuntimeException e){
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
 }

@@ -80,4 +80,12 @@ public class ServicoEdicao {
 
         return userRepository.save(usuario);
     }
+
+    public UserAbstract getData (long id){
+        UserAbstract a = userRepository.findById(id).orElseThrow(()-> new RuntimeException("Usuário não encontrado"));
+        return a; 
+    }
+
+
 }
+
