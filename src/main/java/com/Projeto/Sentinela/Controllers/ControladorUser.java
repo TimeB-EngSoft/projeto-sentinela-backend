@@ -1,25 +1,49 @@
 package com.Projeto.Sentinela.Controllers;
 
+import com.Projeto.Sentinela.DTOs.UpUserDTO;
 import com.Projeto.Sentinela.Entities.UserAbstract;
-import com.Projeto.Sentinela.Services.ServicoAutenticacao;
-
 import java.util.HashMap;
 import java.util.Map;
 
+import com.Projeto.Sentinela.Services.ServicoUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
-public class ControladorAutenticacao {
+public class ControladorUser {
 
     @Autowired
-    private ServicoAutenticacao servicoAutenticacao;
+    private ServicoUser servicoUser;
 
+
+    @PatchMapping("/{id}/user")
+    public ResponseEntity<UserAbstract> atualizarUsuario(
+            @PathVariable Long id,
+            @RequestBody UpUserDTO dto) {
+        try {
+            UserAbstract atualizado = servicoUser.atualizarUser(id, dto);
+            return ResponseEntity.ok(atualizado);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getData(@PathVariable long id){
+        try{
+            UserAbstract a = servicoUser.getData(id);
+            return ResponseEntity.ok(a);
+        }catch(RuntimeException e){
+            // Para "usuário não encontrado", retorne 404
+            if(e.getMessage().contains("Usuário não encontrado")){
+                return ResponseEntity.notFound().build();
+            }
+            // Para outros erros, retorne 400
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 
     @PostMapping("/cadastrar-parcial")
     public ResponseEntity<String> cadastrarParcial(
@@ -29,7 +53,7 @@ public class ControladorAutenticacao {
             @RequestParam String cargo,
             @RequestParam String justificativa) {
         try {
-            servicoAutenticacao.cadastroParcial(nome, email, instituicao, cargo, justificativa);
+            servicoUser.cadastroParcial(nome, email, instituicao, cargo, justificativa);
             return ResponseEntity.ok("Solicitação enviada para análise.");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Erro ao solicitar cadastro: " + e.getMessage());
@@ -45,7 +69,7 @@ public class ControladorAutenticacao {
             @RequestParam String cpf)
     {
         try {
-            servicoAutenticacao.cadastroCompleto(email, senha, telefone, dataNascimento, cpf);
+            servicoUser.cadastroCompleto(email, senha, telefone, dataNascimento, cpf);
             return ResponseEntity.ok("Cadastro completo realizado com sucesso!");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Erro ao completar cadastro: " + e.getMessage());
@@ -56,7 +80,7 @@ public class ControladorAutenticacao {
     @PostMapping("/login")
     public ResponseEntity<?> efetuarLogin(@RequestParam String email, @RequestParam String senha) {
         try {
-            UserAbstract usuario = servicoAutenticacao.login(email, senha);
+            UserAbstract usuario = servicoUser.login(email, senha);
 
             Map<String, Object> resposta = new HashMap<>();
             resposta.put("message", "Login efetuado com sucesso!");
@@ -79,7 +103,7 @@ public class ControladorAutenticacao {
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@RequestParam(required = false) String email) {
         if (email != null) {
-            servicoAutenticacao.logout(email);
+            servicoUser.logout(email);
         }
         return ResponseEntity.ok("Logout efetuado com sucesso!");
     }
@@ -87,7 +111,7 @@ public class ControladorAutenticacao {
     @PostMapping("/validar-token")
     public ResponseEntity<String> validarToken(@RequestParam String token) {
         try {
-            boolean isTokenValido = servicoAutenticacao.validarToken(token);
+            boolean isTokenValido = servicoUser.validarToken(token);
 
             if (isTokenValido) {
                 return ResponseEntity.ok("Token é válido.");
@@ -102,7 +126,7 @@ public class ControladorAutenticacao {
     @PostMapping("/recuperar")
     public ResponseEntity<String> recuperarSenha(@RequestParam String email) {
         try {
-            servicoAutenticacao.solicitarRecuperarSenha(email);
+            servicoUser.solicitarRecuperarSenha(email);
             return ResponseEntity.ok("E-mail de recuperação enviado (se o e-mail existir no sistema).");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Erro ao solicitar recuperação: " + e.getMessage());
@@ -112,7 +136,7 @@ public class ControladorAutenticacao {
     @PostMapping("/redefinir")
     public ResponseEntity<String> redefinirSenha(@RequestParam String token, @RequestParam String novaSenha) {
         try {
-            servicoAutenticacao.redefinirSenha(token, novaSenha);
+            servicoUser.redefinirSenha(token, novaSenha);
             return ResponseEntity.ok("Senha redefinida com sucesso!");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Erro ao redefinir senha: " + e.getMessage());
