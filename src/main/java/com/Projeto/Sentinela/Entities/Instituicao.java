@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "validacao", discriminatorType = DiscriminatorType.INTEGER)
 @Table (name = "Instituicoes")
 public class Instituicao {
 
@@ -25,9 +24,6 @@ public class Instituicao {
     private String email;
     private String areaAtuacao;
     private String descricao;
-
-    @Column(name = "validacao", insertable = false, updatable = false)
-    private Integer validacao;
 
     @Enumerated(EnumType.STRING)
     private EnumStatusInstituicao status;
