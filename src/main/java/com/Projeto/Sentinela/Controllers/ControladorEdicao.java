@@ -27,14 +27,18 @@ public class ControladorEdicao {
         }
     }
 
-    @GetMapping("/{id}/user")
-    public ResponseEntity<UserAbstract> getData(@PathVariable long id ){
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getData(@PathVariable long id){
         try{
             UserAbstract a = servicoEdicao.getData(id);
             return ResponseEntity.ok(a);
         }catch(RuntimeException e){
-            return ResponseEntity.badRequest().body(null);
+            // Para "usuário não encontrado", retorne 404
+            if(e.getMessage().contains("Usuário não encontrado")){
+                return ResponseEntity.notFound().build();
+            }
+            // Para outros erros, retorne 400
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-
 }
