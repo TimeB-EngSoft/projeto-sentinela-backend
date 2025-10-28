@@ -40,8 +40,6 @@ public class Conflito {
     @JoinColumn(name = "id_Instituição", referencedColumnName = "id")
     private Instituicao instituicao;
 
-    private Integer quantidadePessoasAfetadas;
-
     @OneToOne
     @JoinColumn(name = "id_Denuncia_Origem", referencedColumnName = "id")
     private Denuncia denunciaOrigem;

@@ -23,6 +23,7 @@ public class Denuncia {
     private String nomeDenunciante;
     private String emailDenunciante;
     private String telefoneDenunciante;
+    private String cpfDenunciante;
     @Enumerated(EnumType.STRING)
     private EnumFonte fonteDenuncia;
     private String tituloDenuncia;
@@ -30,13 +31,9 @@ public class Denuncia {
     private EnumTipoDeDenuncia tipoDenuncia;
     private LocalDateTime dataOcorrido;
     private String descricaoDenuncia;
-    private String parteReclamante;
-    private String parteReclamada;
-    private String gruposVulneraveisAfetados;
+    private String descricaoPartesEnvolvidas;
     @Enumerated(EnumType.STRING)
     private EnumStatusDenuncia status;
-    private int quantidadePessoasAfetadas;
-
 
 
     public boolean vincularInstituicao(){
