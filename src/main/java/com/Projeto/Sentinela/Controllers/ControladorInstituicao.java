@@ -47,7 +47,7 @@ public class ControladorInstituicao {
      * @param instituicaoDTO Os dados a serem alterados, vindos do corpo da requisição.
      * @return Uma resposta HTTP com a instituição atualizada ou uma mensagem de erro.
      */
-    @PatchMapping("/{id}/instituicao")
+    @PatchMapping("/{id}/atualizar")
     public ResponseEntity<?> atualizarInstituicao(
             @PathVariable Long id,
             @RequestBody UpInstituicaoDTO instituicaoDTO) {
