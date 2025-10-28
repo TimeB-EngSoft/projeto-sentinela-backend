@@ -2,6 +2,10 @@ package com.Projeto.Sentinela.Controllers;
 
 import com.Projeto.Sentinela.Entities.UserAbstract;
 import com.Projeto.Sentinela.Services.ServicoAutenticacao;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -54,13 +58,17 @@ public class ControladorAutenticacao {
         try {
             UserAbstract usuario = servicoAutenticacao.login(email, senha);
 
-            String mensagem = String.format(
-                    "Login efetuado com sucesso! Bem-vindo, %s (%s).",
-                    usuario.getNome(),
-                    usuario.getCargo()
-            );
+            Map<String, Object> resposta = new HashMap<>();
+            resposta.put("message", "Login efetuado com sucesso!");
+            resposta.put("user", Map.of(
+                    "id", usuario.getId(),
+                    "nome", usuario.getNome(),
+                    "email", usuario.getEmail(),
+                    "cargo", usuario.getCargo().toString(),
+                    "instituicao", usuario.getInstituicao() != null ? usuario.getInstituicao().getNome() : null
+            ));
 
-            return ResponseEntity.ok(mensagem);
+            return ResponseEntity.ok(resposta);
 
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body("Erro ao efetuar login: " + e.getMessage());
