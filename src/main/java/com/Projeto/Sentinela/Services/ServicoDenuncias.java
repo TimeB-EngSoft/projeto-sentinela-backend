@@ -9,6 +9,7 @@ import com.Projeto.Sentinela.Repositories.DenunciaRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 
@@ -87,41 +88,48 @@ public class ServicoDenuncias {
         return denunciaRepository.save(denuncia);
     }
 
+    /**
+    * verifica se uma string é null ou está em branco
+    */
+    public boolean vs(String s) {
+        return StringUtils.hasText(s);
+    }
+
     @Transactional
     public Denuncia atualizarDenuncia(long id, DenunciaDTO dto){
 
-        Denuncia denuncia = denunciaRepository.findById(id).orElseThrow(()-> new RuntimeException("Denúncia não presente no sistema"));
+        Denuncia denuncia = buscarPorId(id);
 
 
-        if(!dto.getDescricaoDenuncia().isEmpty()){
+        if(vs(dto.getDescricaoDenuncia())){
             denuncia.setDescricaoDenuncia(dto.getDescricaoDenuncia());
         }
 
-        if(!dto.getDescricaoPartesEnvolvidas().isEmpty()){
+        if(vs(dto.getDescricaoPartesEnvolvidas())){
             denuncia.setDescricaoPartesEnvolvidas(dto.getDescricaoPartesEnvolvidas());
         }
 
-        if(!dto.getTipoDenuncia().equals(denuncia.getTipoDenuncia())){
+        if(null != dto.getTipoDenuncia() && dto.getTipoDenuncia().equals(denuncia.getTipoDenuncia())){
             denuncia.setTipoDenuncia(dto.getTipoDenuncia());
         }
 
-        if(!dto.getDataOcorrido().equals(denuncia.getDataOcorrido())){
+        if(dto.getDataOcorrido() != null && !dto.getDataOcorrido().equals(denuncia.getDataOcorrido())  ){
             denuncia.setDataOcorrido(dto.getDataOcorrido());
         }
 
-        if(!dto.getEmailDenunciante().isEmpty()){
+        if(vs(dto.getEmailDenunciante())){
             denuncia.setEmailDenunciante(dto.getEmailDenunciante());
         }
 
-        if(!dto.getTelefoneDenunciante().isEmpty()){
+        if(vs(dto.getTelefoneDenunciante())){
             denuncia.setTelefoneDenunciante(dto.getTelefoneDenunciante());
         }
 
-        if(dto.getCpfDenunciante().isEmpty()){
+        if(vs(dto.getCpfDenunciante())){
             denuncia.setCpfDenunciante(dto.getCpfDenunciante());
         }
 
-        if(!dto.getTituloDenuncia().isEmpty()){
+        if(vs(dto.getTituloDenuncia())){
             denuncia.setTituloDenuncia(dto.getTituloDenuncia());
         }
 
