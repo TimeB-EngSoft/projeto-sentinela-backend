@@ -58,17 +58,13 @@ public class ControladorAutenticacao {
         try {
             UserAbstract usuario = servicoAutenticacao.login(email, senha);
 
-            Map<String, Object> resposta = new HashMap<>();
-            resposta.put("message", "Login efetuado com sucesso!");
-            resposta.put("user", Map.of(
-                    "id", usuario.getId(),
-                    "nome", usuario.getNome(),
-                    "email", usuario.getEmail(),
-                    "cargo", usuario.getCargo().toString(),
-                    "instituicao", usuario.getInstituicao() != null ? usuario.getInstituicao().getNome() : null
-            ));
+            String mensagem = String.format(
+                    "Login efetuado com sucesso! Bem-vindo, %s (%s).",
+                    usuario.getNome(),
+                    usuario.getCargo()
+            );
 
-            return ResponseEntity.ok(resposta);
+            return ResponseEntity.ok(mensagem);
 
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body("Erro ao efetuar login: " + e.getMessage());
