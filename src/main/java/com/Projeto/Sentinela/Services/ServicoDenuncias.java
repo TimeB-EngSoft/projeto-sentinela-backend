@@ -6,8 +6,10 @@ import com.Projeto.Sentinela.Enums.EnumFonte;
 import com.Projeto.Sentinela.Enums.EnumStatusDenuncia;
 import com.Projeto.Sentinela.Enums.EnumTipoDeDenuncia;
 import com.Projeto.Sentinela.Repositories.DenunciaRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 
@@ -69,9 +71,7 @@ public class ServicoDenuncias {
         return denunciaRepository.save(denuncia);
     }
 
-    /**
-     * Busca uma denúncia pelo ID.
-     */
+
     public Denuncia buscarPorId(Long id) {
         return denunciaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Denúncia não encontrada com ID: " + id));
@@ -83,6 +83,54 @@ public class ServicoDenuncias {
     public Denuncia aprovarDenuncia(Long id, boolean aprovada) {
         Denuncia denuncia = buscarPorId(id);
         denuncia.serAprovada(aprovada);
+        return denunciaRepository.save(denuncia);
+    }
+
+    /**
+    * verifica se uma string é null ou está em branco
+    */
+    public boolean vs(String s) {
+        return StringUtils.hasText(s);
+    }
+
+    @Transactional
+    public Denuncia atualizarDenuncia(long id, DenunciaDTO dto){
+
+        Denuncia denuncia = buscarPorId(id);
+
+
+        if(vs(dto.getDescricaoDenuncia())){
+            denuncia.setDescricaoDenuncia(dto.getDescricaoDenuncia());
+        }
+
+        if(vs(dto.getDescricaoPartesEnvolvidas())){
+            denuncia.setDescricaoPartesEnvolvidas(dto.getDescricaoPartesEnvolvidas());
+        }
+
+        if(null != dto.getTipoDenuncia() && dto.getTipoDenuncia().equals(denuncia.getTipoDenuncia())){
+            denuncia.setTipoDenuncia(dto.getTipoDenuncia());
+        }
+
+        if(dto.getDataOcorrido() != null && !dto.getDataOcorrido().equals(denuncia.getDataOcorrido())  ){
+            denuncia.setDataOcorrido(dto.getDataOcorrido());
+        }
+
+        if(vs(dto.getEmailDenunciante())){
+            denuncia.setEmailDenunciante(dto.getEmailDenunciante());
+        }
+
+        if(vs(dto.getTelefoneDenunciante())){
+            denuncia.setTelefoneDenunciante(dto.getTelefoneDenunciante());
+        }
+
+        if(vs(dto.getCpfDenunciante())){
+            denuncia.setCpfDenunciante(dto.getCpfDenunciante());
+        }
+
+        if(vs(dto.getTituloDenuncia())){
+            denuncia.setTituloDenuncia(dto.getTituloDenuncia());
+        }
+
         return denunciaRepository.save(denuncia);
     }
 }

@@ -1,5 +1,6 @@
 package com.Projeto.Sentinela.Services;
 
+import com.Projeto.Sentinela.DTOs.UpUserDTO;
 import com.Projeto.Sentinela.Entities.*;
 import com.Projeto.Sentinela.Enums.EnumCargo;
 import com.Projeto.Sentinela.Enums.EnumUsuarioStatus;
@@ -14,6 +15,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,7 +26,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class ServicoAutenticacao {
+public class ServicoUser {
 
     @Autowired
     private UserRepository userRepository;
@@ -36,6 +38,71 @@ public class ServicoAutenticacao {
     private JavaMailSender mailSender;
     @Autowired
     private InstituicaoRepository instituicaoRepository;
+
+    @Transactional
+    public UserAbstract atualizarUser(long idUser, UpUserDTO dto) {
+
+        UserAbstract usuario = userRepository.findById(idUser)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado: id=" + idUser));
+
+        // Atualiza email (verifica duplicidade)
+        if (StringUtils.hasText(dto.getEmail()) && !dto.getEmail().equalsIgnoreCase(usuario.getEmail())) {
+            if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
+                throw new RuntimeException("E-mail já em uso por outro usuário.");
+            }
+            usuario.setEmail(dto.getEmail());
+        }
+
+        // Atualiza nome
+        if (StringUtils.hasText(dto.getNome())) {
+            usuario.setNome(dto.getNome());
+        }
+
+        // Atualiza telefone
+        if (StringUtils.hasText(dto.getTelefone())) {
+            usuario.setTelefone(dto.getTelefone());
+        }
+
+        // Atualiza CPF
+        if (StringUtils.hasText(dto.getCpf())) {
+            usuario.setCpf(dto.getCpf());
+        }
+
+        // Atualiza data de nascimento
+        if (dto.getDataNascimento() != null) {
+            usuario.setDataNascimento(LocalDate.parse(dto.getDataNascimento()));
+        }
+
+        // Atualiza status
+        if (dto.getStatus() != null) {
+            usuario.setStatus(dto.getStatus());
+        }
+
+        // Atualiza cargo
+        if (dto.getCargo() != null) {
+            usuario.setCargo(dto.getCargo());
+        }
+
+        // Atualiza instituição (por nome)
+        if (StringUtils.hasText(dto.getInstituicaoNome())) {
+            Instituicao inst = instituicaoRepository.findByNomeContainingIgnoreCase(dto.getInstituicaoNome());
+            if (inst == null) {
+                throw new RuntimeException("Instituição não encontrada: " + dto.getInstituicaoNome());
+            }
+            usuario.setInstituicao(inst);
+        }
+
+        // Atualiza a data de modificação
+        usuario.setDataAtualizacao(LocalDateTime.now());
+
+        return userRepository.save(usuario);
+    }
+
+    public UserAbstract getData (long id){
+        UserAbstract a = userRepository.findById(id).orElseThrow(()-> new RuntimeException("Usuário não encontrado"));
+        return a;
+    }
+
 
     @Transactional
     public void solicitarRecuperarSenha(String email) {
@@ -57,7 +124,7 @@ public class ServicoAutenticacao {
 
         tokenRepository.save(resetToken);
 
-        String link = "http://localhost:8080/autenticacao/redefinir?token=" + token;
+        String link = "http://projeto-sentinela-frontend.s3-website-sa-east-1.amazonaws.com/user/redefinir?token=" + token;
         enviarEmail(userAbstract.getEmail(), link, token);
     }
 
