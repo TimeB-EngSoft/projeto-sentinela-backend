@@ -124,7 +124,7 @@ public class ServicoUser {
 
         tokenRepository.save(resetToken);
 
-        String link = "http://localhost:8080/autenticacao/redefinir?token=" + token;
+        String link = "http://projeto-sentinela-frontend.s3-website-sa-east-1.amazonaws.com/user/redefinir?token=" + token;
         enviarEmail(userAbstract.getEmail(), link, token);
     }
 

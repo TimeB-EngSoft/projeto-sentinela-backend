@@ -18,7 +18,7 @@ public class ControladorUser {
     private ServicoUser servicoUser;
 
 
-    @PatchMapping("/{id}/user")
+    @PatchMapping("/{id}/atualizar")
     public ResponseEntity<UserAbstract> atualizarUsuario(
             @PathVariable Long id,
             @RequestBody UpUserDTO dto) {
@@ -30,7 +30,7 @@ public class ControladorUser {
         }
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id}/informacoes")
     public ResponseEntity<?> getData(@PathVariable long id){
         try{
             UserAbstract a = servicoUser.getData(id);

@@ -71,9 +71,7 @@ public class ServicoDenuncias {
         return denunciaRepository.save(denuncia);
     }
 
-    /**
-     * Busca uma denúncia pelo ID.
-     */
+
     public Denuncia buscarPorId(Long id) {
         return denunciaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Denúncia não encontrada com ID: " + id));
