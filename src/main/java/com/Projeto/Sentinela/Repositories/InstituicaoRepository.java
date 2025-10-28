@@ -2,15 +2,22 @@ package com.Projeto.Sentinela.Repositories;
 
 import com.Projeto.Sentinela.Entities.Instituicao;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
+/**
+ * Repositório para a entidade Instituicao.
+ * Estende JpaRepository para fornecer operações CRUD (Criar, Ler, Atualizar, Deletar)
+ * e outras funcionalidades de acesso a dados prontas para uso.
+ */
+@Repository
 public interface InstituicaoRepository extends JpaRepository<Instituicao, Long> {
 
-    @org.springframework.data.jpa.repository.Query("SELECT i.id FROM Instituicao i WHERE i.nome = :nome")
-    Long findIdByNome(String nome);
-
+    /**
+     * Busca uma instituição pelo nome, ignorando diferenças entre maiúsculas e minúsculas.
+     * O Spring Data JPA cria a implementação deste métoddo automaticamente com base no nome.
+     *
+     * @param nome O nome da instituição a ser procurado.
+     * @return um objeto Instituicao se encontrado, caso contrário, null.
+     */
     Instituicao findByNomeContainingIgnoreCase(String nome);
-
-
-
-
 }
