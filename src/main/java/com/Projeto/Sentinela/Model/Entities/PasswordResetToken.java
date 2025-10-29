@@ -1,5 +1,6 @@
 package com.Projeto.Sentinela.Model.Entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,7 +21,8 @@ public class PasswordResetToken {
 
     private String token;
     private LocalDateTime expiration;
-
+	
+	@JsonIgnore
     @ManyToOne
     @JoinColumn(name = "id_usuario", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)

@@ -299,5 +299,18 @@ public class ServicoUser {
         // Se encontrou e não expirou, o token é válido.
         return true;
     }
+	
+	public void atualizarSenha(Long id, String senhaAtual, String novaSenha) {
+    UserAbstract user = userRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+    if (!user.getSenha().equals(senhaAtual)) {
+        throw new RuntimeException("Senha atual incorreta");
+    }
+
+    user.setSenha(novaSenha);
+    user.setDataAtualizacao(LocalDateTime.now());
+    userRepository.save(user);
+	}
 
 }

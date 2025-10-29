@@ -2,12 +2,15 @@ package com.Projeto.Sentinela.Controllers;
 
 import com.Projeto.Sentinela.Model.DTOs.UpUserDTO;
 import com.Projeto.Sentinela.Model.Entities.UserAbstract;
+import java.util.Map;
+import java.util.HashMap;
 
 import com.Projeto.Sentinela.Services.ServicoUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin(origins = {"http://127.0.0.1:5500", "http://localhost:5500"}, allowedHeaders = "*")
 @RestController
 @RequestMapping("/user")
 public class ControladorUser {
@@ -83,13 +86,13 @@ public class ControladorUser {
         try {
             UserAbstract usuario = servicoUser.login(email, senha);
 
-            String mensagem = String.format(
+            /*String mensagem = String.format(
                     "Login efetuado com sucesso! Bem-vindo, %s (%s).",
                     usuario.getNome(),
                     usuario.getCargo()
-            );
+            );*/
 
-            return ResponseEntity.ok(mensagem);
+            return ResponseEntity.ok(usuario);
 
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body("Erro ao efetuar login: " + e.getMessage());
@@ -139,5 +142,17 @@ public class ControladorUser {
             return ResponseEntity.badRequest().body("Erro ao redefinir senha: " + e.getMessage());
         }
     }
+	
+	@PatchMapping("/{id}/senha")
+	public ResponseEntity<?> atualizarSenha(@PathVariable Long id, @RequestBody Map<String, String> body) {
+		try {
+			String senhaAtual = body.get("senhaAtual");
+			String novaSenha = body.get("novaSenha");
 
+			servicoUser.atualizarSenha(id, senhaAtual, novaSenha);
+			return ResponseEntity.ok("Senha atualizada com sucesso!");
+		} catch (RuntimeException e) {
+			return ResponseEntity.badRequest().body("Erro ao atualizar senha: " + e.getMessage());
+		}
+	}
 }

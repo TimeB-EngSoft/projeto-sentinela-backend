@@ -2,6 +2,8 @@ package com.Projeto.Sentinela.Model.Entities;
 
 import com.Projeto.Sentinela.Model.Enums.EnumCargo;
 import com.Projeto.Sentinela.Model.Enums.EnumUsuarioStatus;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,6 +17,18 @@ import java.time.LocalDateTime;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "cargo", discriminatorType = DiscriminatorType.STRING)
 @Table (name = "Usuarios")
+
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "tipo"
+)
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = GestorSecretaria.class, name = "GestorSecretaria"),
+    @JsonSubTypes.Type(value = UsuarioSecretaria.class, name = "UsuarioSecretaria"),
+    @JsonSubTypes.Type(value = GestorInstituicao.class, name = "GestorInstituicao"),
+    @JsonSubTypes.Type(value = UsuarioInstituicao.class, name = "UsuarioInstituicao")
+})
 public abstract class UserAbstract {
 
 
