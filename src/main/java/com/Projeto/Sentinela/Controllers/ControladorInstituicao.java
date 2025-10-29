@@ -1,8 +1,8 @@
 package com.Projeto.Sentinela.Controllers;
 
-import com.Projeto.Sentinela.DTOs.InstituicaoDTO;
-import com.Projeto.Sentinela.DTOs.UpInstituicaoDTO;
-import com.Projeto.Sentinela.Entities.Instituicao;
+import com.Projeto.Sentinela.Model.DTOs.InstituicaoDTO;
+import com.Projeto.Sentinela.Model.DTOs.UpInstituicaoDTO;
+import com.Projeto.Sentinela.Model.Entities.Instituicao;
 import com.Projeto.Sentinela.Services.ServicoInstituicao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

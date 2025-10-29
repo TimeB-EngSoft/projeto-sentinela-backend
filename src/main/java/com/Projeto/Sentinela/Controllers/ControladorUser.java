@@ -1,9 +1,7 @@
 package com.Projeto.Sentinela.Controllers;
 
-import com.Projeto.Sentinela.DTOs.UpUserDTO;
-import com.Projeto.Sentinela.Entities.UserAbstract;
-import java.util.HashMap;
-import java.util.Map;
+import com.Projeto.Sentinela.Model.DTOs.UpUserDTO;
+import com.Projeto.Sentinela.Model.Entities.UserAbstract;
 
 import com.Projeto.Sentinela.Services.ServicoUser;
 import org.springframework.beans.factory.annotation.Autowired;

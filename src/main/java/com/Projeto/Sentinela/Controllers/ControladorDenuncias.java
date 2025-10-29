@@ -1,7 +1,7 @@
 package com.Projeto.Sentinela.Controllers;
 
-import com.Projeto.Sentinela.DTOs.DenunciaDTO;
-import com.Projeto.Sentinela.Entities.Denuncia;
+import com.Projeto.Sentinela.Model.DTOs.DenunciaDTO;
+import com.Projeto.Sentinela.Model.Entities.Denuncia;
 import com.Projeto.Sentinela.Services.ServicoDenuncias;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

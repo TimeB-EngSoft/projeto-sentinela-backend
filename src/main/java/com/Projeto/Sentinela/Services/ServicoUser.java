@@ -1,12 +1,12 @@
 package com.Projeto.Sentinela.Services;
 
-import com.Projeto.Sentinela.DTOs.UpUserDTO;
-import com.Projeto.Sentinela.Entities.*;
-import com.Projeto.Sentinela.Enums.EnumCargo;
-import com.Projeto.Sentinela.Enums.EnumUsuarioStatus;
-import com.Projeto.Sentinela.Repositories.InstituicaoRepository;
-import com.Projeto.Sentinela.Repositories.PasswordResetTokenRepository;
-import com.Projeto.Sentinela.Repositories.UserRepository;
+import com.Projeto.Sentinela.Model.DTOs.UpUserDTO;
+import com.Projeto.Sentinela.Model.Entities.*;
+import com.Projeto.Sentinela.Model.Enums.EnumCargo;
+import com.Projeto.Sentinela.Model.Enums.EnumUsuarioStatus;
+import com.Projeto.Sentinela.Model.Repositories.InstituicaoRepository;
+import com.Projeto.Sentinela.Model.Repositories.PasswordResetTokenRepository;
+import com.Projeto.Sentinela.Model.Repositories.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;

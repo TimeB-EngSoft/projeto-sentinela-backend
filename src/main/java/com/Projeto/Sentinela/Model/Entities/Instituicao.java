@@ -1,0 +1,46 @@
+package com.Projeto.Sentinela.Model.Entities;
+
+import com.Projeto.Sentinela.Model.Enums.EnumStatusInstituicao;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@Table (name = "Instituicoes")
+public class Instituicao {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String nome;
+    private String sigla;
+    private String cnpj;
+    private String telefone;
+    private String email;
+    private String areaAtuacao;
+    private String descricao;
+
+    @Enumerated(EnumType.STRING)
+    private EnumStatusInstituicao status;
+
+    @OneToOne
+    @JoinColumn(name = "cep_localizacao", referencedColumnName = "cep")
+    private Localizacao localizacao;
+
+    private LocalDateTime dataCadastro;
+
+    public Instituicao() {}
+
+    public int getNumUsuarios(){
+        return 1;
+        //implementação futura, com captação do número a partir do repositorio de usuarios
+    }
+    public boolean associarGestor(){
+        return true;
+    }
+}

@@ -1,11 +1,11 @@
 package com.Projeto.Sentinela.Services;
 
-import com.Projeto.Sentinela.DTOs.DenunciaDTO;
-import com.Projeto.Sentinela.Entities.Denuncia;
-import com.Projeto.Sentinela.Enums.EnumFonte;
-import com.Projeto.Sentinela.Enums.EnumStatusDenuncia;
-import com.Projeto.Sentinela.Enums.EnumTipoDeDenuncia;
-import com.Projeto.Sentinela.Repositories.DenunciaRepository;
+import com.Projeto.Sentinela.Model.DTOs.DenunciaDTO;
+import com.Projeto.Sentinela.Model.Entities.Denuncia;
+import com.Projeto.Sentinela.Model.Enums.EnumFonte;
+import com.Projeto.Sentinela.Model.Enums.EnumStatusDenuncia;
+import com.Projeto.Sentinela.Model.Enums.EnumTipoDeDenuncia;
+import com.Projeto.Sentinela.Model.Repositories.DenunciaRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

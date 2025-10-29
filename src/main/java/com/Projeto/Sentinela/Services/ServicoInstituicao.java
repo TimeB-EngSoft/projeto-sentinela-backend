@@ -1,10 +1,10 @@
 package com.Projeto.Sentinela.Services;
 
-import com.Projeto.Sentinela.DTOs.InstituicaoDTO;
-import com.Projeto.Sentinela.DTOs.UpInstituicaoDTO;
-import com.Projeto.Sentinela.Entities.Instituicao;
-import com.Projeto.Sentinela.Enums.EnumStatusInstituicao;
-import com.Projeto.Sentinela.Repositories.InstituicaoRepository;
+import com.Projeto.Sentinela.Model.DTOs.InstituicaoDTO;
+import com.Projeto.Sentinela.Model.DTOs.UpInstituicaoDTO;
+import com.Projeto.Sentinela.Model.Entities.Instituicao;
+import com.Projeto.Sentinela.Model.Enums.EnumStatusInstituicao;
+import com.Projeto.Sentinela.Model.Repositories.InstituicaoRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
