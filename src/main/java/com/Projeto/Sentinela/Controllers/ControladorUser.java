@@ -56,6 +56,9 @@ public class ControladorUser {
             servicoUser.cadastroParcial(nome, email, instituicao, cargo, justificativa);
             return ResponseEntity.ok("Solicitação enviada para análise.");
         } catch (Exception e) {
+            if(e.getMessage().equals("E-mail já cadastrado.")){
+                return ResponseEntity.notFound().build();
+            }
             return ResponseEntity.badRequest().body("Erro ao solicitar cadastro: " + e.getMessage());
         }
     }
