@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/denuncias")
 public class ControladorDenuncias {
@@ -42,5 +44,14 @@ public class ControladorDenuncias {
 
     }
 
+    @GetMapping("/visualizar")
+    public ResponseEntity<?> vizualizarDenuncia(){
 
+        try{
+            List<?> a = servicoDenuncia.visualizarDenuncias();
+            return ResponseEntity.ok(a);
+        }catch(RuntimeException e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }
