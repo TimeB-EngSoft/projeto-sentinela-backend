@@ -2,15 +2,19 @@ package com.Projeto.Sentinela.Services;
 
 import com.Projeto.Sentinela.Model.DTOs.InstituicaoDTO;
 import com.Projeto.Sentinela.Model.DTOs.UpInstituicaoDTO;
-import com.Projeto.Sentinela.Model.Entities.Instituicao;
+import com.Projeto.Sentinela.Model.Entities.*;
 import com.Projeto.Sentinela.Model.Enums.EnumStatusInstituicao;
 import com.Projeto.Sentinela.Model.Repositories.InstituicaoRepository;
+import com.Projeto.Sentinela.Model.Repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Serviço responsável pela lógica de negócio relacionada às instituições.
@@ -20,6 +24,9 @@ public class ServicoInstituicao {
 
     @Autowired
     private InstituicaoRepository instituicaoRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * Cadastra uma nova instituição no sistema.
@@ -98,6 +105,28 @@ public class ServicoInstituicao {
 
         // 3. Salva a entidade atualizada no banco de dados.
         return instituicaoRepository.save(instituicao);
+    }
+
+    public List<UserAbstract> listarUsuarios(long id){
+        Instituicao i = instituicaoRepository.findById(id).orElseThrow(()-> new RuntimeException("Intituição não presente"));
+        //Instanciação de usuários para servir como exemplo para querry no BD
+        UserAbstract g = new GestorInstituicao();
+        g.setInstituicao(i);
+        UserAbstract u = new UsuarioInstituicao();
+        u.setInstituicao(i);
+
+        Example<UserAbstract> e1 = Example.of(u);
+        Example<UserAbstract> e2 = Example.of(g);
+
+        List<UserAbstract> lista =userRepository.findAll(e1);
+
+        lista.addAll(userRepository.findAll(e2));
+
+        if(lista.isEmpty()){
+            throw new RuntimeException("Nenhum usuario encontrado");
+        }
+
+        return lista;
     }
 
 }

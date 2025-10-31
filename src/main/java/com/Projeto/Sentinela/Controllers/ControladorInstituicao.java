@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * Controlador REST para gerenciar as requisições relacionadas a instituições.
  */
@@ -58,5 +60,17 @@ public class ControladorInstituicao {
             // Captura exceções (ex: instituição não encontrada) e retorna um erro claro.
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @GetMapping("/{id}/listarUsers")
+    public ResponseEntity<?> listarUsuarios(@PathVariable Long id){
+
+        try{
+            List<?> a =servicoInstituicao.listarUsuarios(id);
+            return ResponseEntity.ok(a);
+        }catch(RuntimeException e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+
     }
 }
