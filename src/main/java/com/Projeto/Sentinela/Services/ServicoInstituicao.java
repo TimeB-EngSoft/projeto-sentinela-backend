@@ -15,8 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.List;
 
@@ -121,6 +123,39 @@ public class ServicoInstituicao {
 
         Instituicao i = instituicaoRepository.findById(id).orElseThrow(()-> new RuntimeException("Intituição não presente"));
 
+        if(tipo.equalsIgnoreCase("all")){
+            UserAbstract g = new GestorInstituicao();
+            g.setInstituicao(i);
+            UserAbstract u = new UsuarioInstituicao();
+            u.setInstituicao(i);
+
+            Example<UserAbstract> e1 = Example.of(g);
+            Example<UserAbstract> e2 = Example.of(u);
+
+            List<UserAbstract> lista =userRepository.findAll(e1);
+            lista.addAll(userRepository.findAll(e2));
+            if(lista.isEmpty()){
+                throw new RuntimeException("Nenhum usuario encontrado");
+            }
+
+            List<UpUserDTO> listDTO = lista.stream().map(user -> new UpUserDTO(
+                    user.getNome(),
+                    user.getEmail(),
+                    user.getTelefone(),
+                    Optional.ofNullable(user.getDataNascimento())
+                            .map(LocalDate::toString)
+                            .orElse(null)
+                    ,
+                    user.getCpf(),
+                    user.getCargo(),
+                    user.getStatus(),
+                    user.getInstituicao().getNome()
+            )).toList();
+
+            return listDTO;
+
+        }
+
         try {
             if (servicoUser.enumConverter(tipo) instanceof EnumCargo) {
                 EnumCargo c = (EnumCargo) servicoUser.enumConverter(tipo);
@@ -142,7 +177,9 @@ public class ServicoInstituicao {
                         user.getNome(),
                         user.getEmail(),
                         user.getTelefone(),
-                        user.getDataNascimento().toString(),
+                        Optional.ofNullable(user.getDataNascimento())
+                                .map(LocalDate::toString)
+                                .orElse(null),
                         user.getCpf(),
                         user.getCargo(),
                         user.getStatus(),
