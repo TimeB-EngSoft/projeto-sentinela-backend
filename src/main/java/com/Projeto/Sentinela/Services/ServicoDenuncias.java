@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class ServicoDenuncias {
@@ -133,4 +134,13 @@ public class ServicoDenuncias {
 
         return denunciaRepository.save(denuncia);
     }
+
+    public List<Denuncia> visualizarDenuncias(){
+        List<Denuncia> d = denunciaRepository.findAll();
+        if(d.isEmpty()){
+            throw new RuntimeException("Nenhum denuncia encontrada");
+        }
+        return d;
+    }
+
 }
