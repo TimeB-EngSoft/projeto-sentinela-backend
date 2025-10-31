@@ -1,6 +1,7 @@
 package com.Projeto.Sentinela.Services;
 
 import com.Projeto.Sentinela.Model.DTOs.InstituicaoDTO;
+import com.Projeto.Sentinela.Model.DTOs.InstituicaoResponseDTO;
 import com.Projeto.Sentinela.Model.DTOs.UpInstituicaoDTO;
 import com.Projeto.Sentinela.Model.Entities.Instituicao;
 import com.Projeto.Sentinela.Model.Enums.EnumStatusInstituicao;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Serviço responsável pela lógica de negócio relacionada às instituições.
@@ -99,5 +102,22 @@ public class ServicoInstituicao {
         // 3. Salva a entidade atualizada no banco de dados.
         return instituicaoRepository.save(instituicao);
     }
+
+    public List<InstituicaoResponseDTO> listarTodasInstituicoes() {
+        return instituicaoRepository.findAll().stream()
+                .map(inst -> new InstituicaoResponseDTO(
+                        inst.getId(),
+                        inst.getNome(),
+                        inst.getSigla(),
+                        inst.getCnpj(),
+                        inst.getTelefone(),
+                        inst.getEmail(),
+                        inst.getAreaAtuacao(),
+                        inst.getDescricao(),
+                        inst.getStatus()
+                ))
+                .collect(Collectors.toList());
+    }
+
 
 }

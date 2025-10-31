@@ -59,4 +59,22 @@ public class ControladorInstituicao {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @GetMapping("/listar")
+    public ResponseEntity<?> listarInstituicoes() {
+        try {
+            var instituicoes = servicoInstituicao.listarTodasInstituicoes();
+
+            if (instituicoes.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                        .body("Nenhuma instituição cadastrada.");
+            }
+
+            return ResponseEntity.ok(instituicoes);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao listar instituições: " + e.getMessage());
+        }
+    }
+
 }
