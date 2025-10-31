@@ -62,11 +62,11 @@ public class ControladorInstituicao {
         }
     }
 
-    @GetMapping("/{id}/listarUsers")
-    public ResponseEntity<?> listarUsuarios(@PathVariable Long id){
+    @GetMapping("/{id}/listUsers")
+    public ResponseEntity<?> listarUsers(@PathVariable Long id, @RequestParam String tipo){
 
         try{
-            List<?> a =servicoInstituicao.listarUsuarios(id);
+            List<?> a =servicoInstituicao.listarUsuarios(id,tipo);
             return ResponseEntity.ok(a);
         }catch(RuntimeException e){
             return ResponseEntity.badRequest().body(e.getMessage());

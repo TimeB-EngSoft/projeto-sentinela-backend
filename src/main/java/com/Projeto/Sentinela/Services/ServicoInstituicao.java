@@ -1,10 +1,10 @@
 package com.Projeto.Sentinela.Services;
 
-import com.Projeto.Sentinela.Model.DTOs.InstituicaoDTO;
-import com.Projeto.Sentinela.Model.DTOs.InstituicaoResponseDTO;
-import com.Projeto.Sentinela.Model.DTOs.UpInstituicaoDTO;
+import com.Projeto.Sentinela.Model.DTOs.*;
 import com.Projeto.Sentinela.Model.Entities.*;
+import com.Projeto.Sentinela.Model.Enums.EnumCargo;
 import com.Projeto.Sentinela.Model.Enums.EnumStatusInstituicao;
+import com.Projeto.Sentinela.Model.Enums.EnumUsuarioStatus;
 import com.Projeto.Sentinela.Model.Repositories.InstituicaoRepository;
 import com.Projeto.Sentinela.Model.Repositories.UserRepository;
 import jakarta.transaction.Transactional;
@@ -13,11 +13,14 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.List;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * Serviço responsável pela lógica de negócio relacionada às instituições.
@@ -30,6 +33,8 @@ public class ServicoInstituicao {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private ServicoUser servicoUser;
 
     /**
      * Cadastra uma nova instituição no sistema.
@@ -110,26 +115,47 @@ public class ServicoInstituicao {
         return instituicaoRepository.save(instituicao);
     }
 
-    public List<UserAbstract> listarUsuarios(long id){
+
+
+    public List<UpUserDTO> listarUsuarios(long id,  String tipo){
+
         Instituicao i = instituicaoRepository.findById(id).orElseThrow(()-> new RuntimeException("Intituição não presente"));
-        //Instanciação de usuários para servir como exemplo para querry no BD
-        UserAbstract g = new GestorInstituicao();
-        g.setInstituicao(i);
-        UserAbstract u = new UsuarioInstituicao();
-        u.setInstituicao(i);
 
-        Example<UserAbstract> e1 = Example.of(u);
-        Example<UserAbstract> e2 = Example.of(g);
+        try {
+            if (servicoUser.enumConverter(tipo) instanceof EnumCargo) {
+                EnumCargo c = (EnumCargo) servicoUser.enumConverter(tipo);
 
-        List<UserAbstract> lista =userRepository.findAll(e1);
+                //Instanciação de usuários para servir como exemplo para querry no BD
+                UserAbstract g = new GestorInstituicao();
+                g.setInstituicao(i);
+                g.setCargo(c);
 
-        lista.addAll(userRepository.findAll(e2));
+                Example<UserAbstract> e1 = Example.of(g);
 
-        if(lista.isEmpty()){
-            throw new RuntimeException("Nenhum usuario encontrado");
+                List<UserAbstract> lista =userRepository.findAll(e1);
+
+                if(lista.isEmpty()){
+                    throw new RuntimeException("Nenhum usuario encontrado");
+                }
+
+                List<UpUserDTO> listDTO = lista.stream().map(user -> new UpUserDTO(
+                        user.getNome(),
+                        user.getEmail(),
+                        user.getTelefone(),
+                        user.getDataNascimento().toString(),
+                        user.getCpf(),
+                        user.getCargo(),
+                        user.getStatus(),
+                        user.getInstituicao().getNome()
+                )).toList();
+
+                return listDTO;
+            }else{
+                throw new RuntimeException("Parametro não corresponde a um cargo");
+            }
+        }catch(IllegalArgumentException ex){
+            throw new RuntimeException(ex.getMessage());
         }
-
-        return lista;
     }
 
     public List<InstituicaoResponseDTO> listarTodasInstituicoes() {
@@ -145,7 +171,7 @@ public class ServicoInstituicao {
                         inst.getDescricao(),
                         inst.getStatus()
                 ))
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
 

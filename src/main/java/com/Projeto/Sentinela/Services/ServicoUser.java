@@ -39,6 +39,23 @@ public class ServicoUser {
     @Autowired
     private InstituicaoRepository instituicaoRepository;
 
+    /*
+    * permite que sejam passados parâmetros na forma de string, case-insensitive, para qualquer um dos enuns de user
+    * */
+    public  Enum<?> enumConverter(String tipo){
+        try{
+            EnumCargo c = EnumCargo.valueOf(tipo.toUpperCase());
+            return c;
+        }catch(IllegalArgumentException e){
+            try{
+                EnumUsuarioStatus s = EnumUsuarioStatus.valueOf(tipo.toUpperCase());
+                return s;
+            }catch(IllegalArgumentException ex){
+                throw new RuntimeException("Tipo passado não corresponde aos existentes");
+            }
+        }
+    }
+
     @Transactional
     public UserAbstract atualizarUser(long idUser, UpUserDTO dto) {
 
