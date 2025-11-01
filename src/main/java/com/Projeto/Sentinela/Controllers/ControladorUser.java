@@ -64,6 +64,15 @@ public class ControladorUser {
         }
     }
 
+    @GetMapping("/listByStatus")
+    public ResponseEntity<?> ListByStatus(@RequestParam String status) {
+        try {
+            return ResponseEntity.ok(servicoUser.listUserByStatus(status));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PostMapping("/cadastrar-completo")
     public ResponseEntity<String> cadastrarCompleto(
             @RequestParam String email,

@@ -12,6 +12,7 @@ import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.domain.Example;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -22,8 +23,12 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import static java.util.stream.Collectors.toList;
 
 @Service
 public class ServicoUser {
@@ -54,6 +59,53 @@ public class ServicoUser {
                 throw new RuntimeException("Tipo passado não corresponde aos existentes");
             }
         }
+    }
+
+    public List<UpUserDTO> listUserByStatus(String status){
+
+        if(enumConverter(status) instanceof EnumUsuarioStatus){
+            EnumUsuarioStatus eu = (EnumUsuarioStatus) enumConverter(status);
+            UserAbstract u = new UsuarioInstituicao();
+            u.setStatus(eu);
+            UserAbstract g = new GestorInstituicao();
+            g.setStatus(eu);
+            UserAbstract gs = new GestorSecretaria();
+            gs.setStatus(eu);
+            UserAbstract us = new UsuarioSecretaria();
+            us.setStatus(eu);
+
+
+            Example<UserAbstract> ex1 = Example.of(u);
+            Example<UserAbstract> ex2 = Example.of(g);
+            Example<UserAbstract> ex3 = Example.of(gs);
+            Example<UserAbstract> ex4 = Example.of(us);
+            List<UserAbstract> list = userRepository.findAll(ex1);
+            list.addAll(userRepository.findAll(ex2));
+            list.addAll(userRepository.findAll(ex3));
+            list.addAll(userRepository.findAll(ex4));
+            if(list.isEmpty()){
+                throw new RuntimeException("Não há usuários com este status");
+            }
+
+            List<UpUserDTO> listDTO = list.stream().map(user -> new UpUserDTO(
+                    user.getNome(),
+                    user.getEmail(),
+                    user.getTelefone(),
+                    Optional.ofNullable(user.getDataNascimento())
+                            .map(LocalDate::toString)
+                            .orElse(null),
+                    user.getCpf(),
+                    user.getCargo(),
+                    user.getStatus(),
+                    Optional.ofNullable(user.getInstituicao())
+                            .map(Instituicao::getNome)
+                            .orElse(null)
+            )).toList();
+            return listDTO;
+        }else{
+            throw new RuntimeException("Argumento inválido");
+        }
+
     }
 
     @Transactional
