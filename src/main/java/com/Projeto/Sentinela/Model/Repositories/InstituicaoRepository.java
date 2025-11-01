@@ -20,4 +20,5 @@ public interface InstituicaoRepository extends JpaRepository<Instituicao, Long> 
      * @return um objeto Instituicao se encontrado, caso contrário, null.
      */
     Instituicao findByNomeContainingIgnoreCase(String nome);
+
 }

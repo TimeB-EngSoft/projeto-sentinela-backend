@@ -44,8 +44,8 @@ public class ControladorDenuncias {
 
     }
 
-    @GetMapping("/visualizar")
-    public ResponseEntity<?> vizualizarDenuncia(){
+    @GetMapping("/listarDenuncias")
+    public ResponseEntity<?> listarDenuncias(){
 
         try{
             List<?> a = servicoDenuncia.visualizarDenuncias();

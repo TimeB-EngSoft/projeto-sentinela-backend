@@ -23,12 +23,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import static java.util.stream.Collectors.toList;
 
 @Service
 public class ServicoUser {
@@ -288,7 +285,16 @@ public class ServicoUser {
         }
         usuario.setNome(nome);
         usuario.setEmail(email);
-        usuario.setInstituicao(instituicaoRepository.findByNomeContainingIgnoreCase(instituicao));
+        System.out.println("🔍 Procurando instituição com nome: " + instituicao);
+
+
+        Instituicao instituicaoEncontrada = instituicaoRepository.findByNomeContainingIgnoreCase(instituicao);
+
+        if (instituicaoEncontrada == null) {
+            throw new RuntimeException("Instituição não encontrada: " + instituicao);
+        }
+
+        usuario.setInstituicao(instituicaoEncontrada);
         usuario.setCargo(EnumCargo.valueOf(
                 cargo.toUpperCase()
                         .replace(" DA ", " ") // remove o “DA” antes de virar underscore
@@ -307,18 +313,20 @@ public class ServicoUser {
         UserAbstract user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
 
-        if (user.getStatus() != EnumUsuarioStatus.ATIVO) {  // ao gestor aceitar o usuario, o status dele passa automaticamente para ATIVO (lembrar de implementar no futuro)
-            throw new RuntimeException("O cadastro ainda não foi aprovado.");
+        if (user.getStatus() != EnumUsuarioStatus.PENDENTE) {
+            throw new RuntimeException("Usuário ainda não foi aprovado pelo gestor.");
         }
 
         user.setSenha(senha);
         user.setTelefone(telefone);
         user.setDataNascimento(LocalDate.parse(dataNascimento));
-        user.setDataAtualizacao(LocalDateTime.now());
         user.setCpf(cpf);
+        user.setStatus(EnumUsuarioStatus.ATIVO);
+        user.setDataAtualizacao(LocalDateTime.now());
 
         userRepository.save(user);
     }
+
 
     public UserAbstract login(String email, String senha) {
         UserAbstract usuario = userRepository.findByEmail(email)
@@ -381,5 +389,78 @@ public class ServicoUser {
     user.setDataAtualizacao(LocalDateTime.now());
     userRepository.save(user);
 	}
+
+    @Transactional
+    public void aprovarOuRecusarCadastro(Long id, boolean aprovado) {
+        UserAbstract user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+
+        if (user.getStatus() != EnumUsuarioStatus.PENDENTE) {
+            throw new RuntimeException("Usuário já foi analisado anteriormente.");
+        }
+
+        if (!aprovado) {
+            user.setStatus(EnumUsuarioStatus.INATIVO);
+            user.setDataAtualizacao(LocalDateTime.now());
+            userRepository.save(user);
+            return;
+        }
+
+        // Caso aprovado: gera token e envia e-mail
+        user.setStatus(EnumUsuarioStatus.PENDENTE);
+        user.setDataAtualizacao(LocalDateTime.now());
+        userRepository.save(user);
+
+        String token = UUID.randomUUID().toString();
+
+        PasswordResetToken confirmToken = new PasswordResetToken();
+        confirmToken.setToken(token);
+        confirmToken.setUsuario(user);
+        confirmToken.setExpiration(LocalDateTime.now().plusDays(2)); // expira em 48h
+        tokenRepository.save(confirmToken);
+
+        String link = "http://projeto-sentinela-frontend.s3-website-sa-east-1.amazonaws.com/user/completarcadastro?token=" + token;
+
+        enviarEmailAprovacao(user.getEmail(), user.getNome(), link);
+    }
+
+    private void enviarEmailAprovacao(String destinatario, String nome, String link) {
+        try {
+            MimeMessage mensagem = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mensagem, true, "UTF-8");
+
+            helper.setTo(destinatario);
+            helper.setSubject("✅ Cadastro Aprovado - Projeto Sentinela");
+
+            // 🔹 Carrega o HTML do template
+            String corpoHtml;
+            try (InputStream inputStream = getClass().getResourceAsStream("/templates/email/email-cadastro.html")) {
+                if (inputStream == null) {
+                    throw new RuntimeException("Template de e-mail não encontrado em /templates/email/email-cadastro.html");
+                }
+
+                corpoHtml = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                corpoHtml = corpoHtml.replace("${userName}", nome);
+                corpoHtml = corpoHtml.replace("${redirectUrl}", link);
+            }
+
+            helper.setText(corpoHtml, true);
+
+            // 🔹 Adiciona logo inline
+            ClassPathResource logo = new ClassPathResource("static/images/ProjetoSentinelaLogo.png");
+            if (logo.exists()) {
+                helper.addInline("logoSentinela", logo);
+            } else {
+                System.err.println("⚠️ Logo não encontrada no caminho: static/images/ProjetoSentinelaLogo.png");
+            }
+
+            mailSender.send(mensagem);
+            System.out.println("✅ E-mail de aprovação enviado para " + destinatario);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao enviar e-mail de aprovação: " + e.getMessage());
+        }
+    }
+
 
 }

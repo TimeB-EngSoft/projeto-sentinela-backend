@@ -3,11 +3,13 @@ package com.Projeto.Sentinela.Services;
 import com.Projeto.Sentinela.Model.DTOs.ConflitoDTO;
 import com.Projeto.Sentinela.Model.Entities.Conflito;
 import com.Projeto.Sentinela.Model.Repositories.ConflitoRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class ServicoConflito {
@@ -15,42 +17,106 @@ public class ServicoConflito {
     @Autowired
     private ConflitoRepository conflitoRepository;
 
-    public Conflito cadastarConflitoDiretamente(ConflitoDTO dto){
+    /**
+     * Cadastra um conflito diretamente (sem depender de denúncia).
+     */
+    public Conflito cadastarConflitoDiretamente(ConflitoDTO dto) {
 
+        // (futuro) verificação de conflito duplicado
+        Conflito conflito = new Conflito();
 
+        // Dados gerais
+        conflito.setTituloConflito(dto.getTituloConflito());
+        conflito.setDescricaoConflito(dto.getDescricaoConflito());
+        conflito.setParteReclamante(dto.getParteReclamante());
+        conflito.setParteReclamada(dto.getParteReclamada());
+        conflito.setGruposVulneraveis(dto.getGruposVulneraveis());
+        conflito.setInstituicao(dto.getInstituicao());
+        conflito.setDenunciaOrigem(dto.getDenunciaOrigem());
 
-        if(true) {//placeholder para um método futuro que verifica a existência de um conflito no BD
+        // Datas
+        conflito.setDataInicio(dto.getDataInicio() != null ? dto.getDataInicio() : LocalDateTime.now());
+        conflito.setDataFim(dto.getDataFim());
 
-            Conflito conflito = new  Conflito();
+        // Enums
+        conflito.setStatus(dto.getStatus());
+        conflito.setPrioridade(dto.getPrioridade());
+        conflito.setFonteDenuncia(dto.getFonteDenuncia());
+        conflito.setTipoConflito(dto.getTipoConflito());
 
-            //Dados Gerais
-
-            conflito.setTituloConflito(dto.getTituloConflito());
-
-            if (dto.getDataInicio() != null) {
-                conflito.setDataInicio(dto.getDataInicio());
-            } else {
-                conflito.setDataInicio(LocalDateTime.now());
-            }
-
-            if (dto.getDataFim() != null) {
-                conflito.setDataFim(dto.getDataFim());
-            }
-
-            conflito.setDescricaoConflito(dto.getDescricaoConflito());
-            conflito.setParteReclamante(dto.getParteReclamante());
-            conflito.setParteReclamada(dto.getParteReclamada());
-            conflito.setGruposVulneraveis(dto.getGruposVulneraveis());
-            conflito.setInstituicao(dto.getInstituicao());
-
-            //Enuns
-            conflito.setStatus(dto.getStatus());
-            conflito.setPrioridade(dto.getPrioridade());
-
-            return conflitoRepository.save(conflito);
-        }else{
-            throw new RuntimeException("Conflito já cadastrado");
-        }
+        return conflitoRepository.save(conflito);
     }
 
+    /**
+     * Lista todos os conflitos registrados.
+     */
+    public List<Conflito> listarConflitos() {
+        List<Conflito> conflitos = conflitoRepository.findAll();
+        if (conflitos.isEmpty()) {
+            throw new RuntimeException("Nenhum conflito encontrado.");
+        }
+        return conflitos;
+    }
+
+    /**
+     * Busca um conflito pelo ID.
+     */
+    public Conflito buscarPorId(Long id) {
+        return conflitoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Conflito não encontrado com ID: " + id));
+    }
+
+    /**
+     * Atualiza os dados de um conflito existente.
+     */
+    @Transactional
+    public Conflito atualizarConflito(Long id, ConflitoDTO dto) {
+        Conflito conflito = buscarPorId(id);
+
+        if (StringUtils.hasText(dto.getTituloConflito())) {
+            conflito.setTituloConflito(dto.getTituloConflito());
+        }
+
+        if (StringUtils.hasText(dto.getDescricaoConflito())) {
+            conflito.setDescricaoConflito(dto.getDescricaoConflito());
+        }
+
+        if (StringUtils.hasText(dto.getParteReclamante())) {
+            conflito.setParteReclamante(dto.getParteReclamante());
+        }
+
+        if (StringUtils.hasText(dto.getParteReclamada())) {
+            conflito.setParteReclamada(dto.getParteReclamada());
+        }
+
+        if (StringUtils.hasText(dto.getGruposVulneraveis())) {
+            conflito.setGruposVulneraveis(dto.getGruposVulneraveis());
+        }
+
+        if (dto.getDataInicio() != null && !dto.getDataInicio().equals(conflito.getDataInicio())) {
+            conflito.setDataInicio(dto.getDataInicio());
+        }
+
+        if (dto.getDataFim() != null && !dto.getDataFim().equals(conflito.getDataFim())) {
+            conflito.setDataFim(dto.getDataFim());
+        }
+
+        if (dto.getStatus() != null) {
+            conflito.setStatus(dto.getStatus());
+        }
+
+        if (dto.getPrioridade() != null) {
+            conflito.setPrioridade(dto.getPrioridade());
+        }
+
+        if (dto.getInstituicao() != null) {
+            conflito.setInstituicao(dto.getInstituicao());
+        }
+
+        if (dto.getDenunciaOrigem() != null) {
+            conflito.setDenunciaOrigem(dto.getDenunciaOrigem());
+        }
+
+        return conflitoRepository.save(conflito);
+    }
 }

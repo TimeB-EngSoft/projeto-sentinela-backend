@@ -2,13 +2,12 @@ package com.Projeto.Sentinela.Controllers;
 
 import com.Projeto.Sentinela.Model.DTOs.UpUserDTO;
 import com.Projeto.Sentinela.Model.Entities.UserAbstract;
-import java.util.Map;
-import java.util.HashMap;
-
 import com.Projeto.Sentinela.Services.ServicoUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @CrossOrigin(origins = {"http://127.0.0.1:5500", "http://localhost:5500"}, allowedHeaders = "*")
 @RestController
@@ -58,7 +57,7 @@ public class ControladorUser {
             return ResponseEntity.ok("Solicitação enviada para análise.");
         } catch (Exception e) {
             if(e.getMessage().equals("E-mail já cadastrado.")){
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.badRequest().body("Email já cadastrado no sistema");
             }
             return ResponseEntity.badRequest().body("Erro ao solicitar cadastro: " + e.getMessage());
         }
@@ -164,4 +163,20 @@ public class ControladorUser {
 			return ResponseEntity.badRequest().body("Erro ao atualizar senha: " + e.getMessage());
 		}
 	}
+
+    @PatchMapping("/{id}/aprovar")
+    public ResponseEntity<?> aprovarUsuario(
+            @PathVariable Long id,
+            @RequestParam boolean aprovado) {
+        try {
+            servicoUser.aprovarOuRecusarCadastro(id, aprovado);
+            String msg = aprovado
+                    ? "Usuário aprovado e e-mail de confirmação enviado."
+                    : "Usuário recusado com sucesso.";
+            return ResponseEntity.ok(msg);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("Erro ao processar aprovação: " + e.getMessage());
+        }
+    }
+
 }
