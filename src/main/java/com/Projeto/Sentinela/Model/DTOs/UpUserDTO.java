@@ -14,6 +14,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UpUserDTO {
+	private Long id;
     private String nome;
     private String email;
     private String telefone;

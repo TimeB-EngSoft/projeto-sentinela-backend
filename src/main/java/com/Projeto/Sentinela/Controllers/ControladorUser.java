@@ -74,14 +74,14 @@ public class ControladorUser {
 
     @PostMapping("/cadastrar-completo")
     public ResponseEntity<String> cadastrarCompleto(
-            @RequestParam String email,
+            @RequestParam String token,
             @RequestParam String senha,
             @RequestParam String telefone,
             @RequestParam String dataNascimento,
             @RequestParam String cpf)
     {
         try {
-            servicoUser.cadastroCompleto(email, senha, telefone, dataNascimento, cpf);
+            servicoUser.cadastroCompleto(token, senha, telefone, dataNascimento, cpf);
             return ResponseEntity.ok("Cadastro completo realizado com sucesso!");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Erro ao completar cadastro: " + e.getMessage());

@@ -138,19 +138,23 @@ public class ServicoInstituicao {
                 throw new RuntimeException("Nenhum usuario encontrado");
             }
 
-            List<UpUserDTO> listDTO = lista.stream().map(user -> new UpUserDTO(
-                    user.getNome(),
-                    user.getEmail(),
-                    user.getTelefone(),
-                    Optional.ofNullable(user.getDataNascimento())
+            List<UpUserDTO> listDTO = lista.stream().map(user -> {
+                UpUserDTO dto = new UpUserDTO();
+                dto.setId(user.getId()); // <-- Adiciona o ID
+                dto.setNome(user.getNome());
+                dto.setEmail(user.getEmail());
+                dto.setTelefone(user.getTelefone());
+                dto.setDataNascimento(Optional.ofNullable(user.getDataNascimento())
                             .map(LocalDate::toString)
-                            .orElse(null)
-                    ,
-                    user.getCpf(),
-                    user.getCargo(),
-                    user.getStatus(),
-                    user.getInstituicao().getNome()
-            )).toList();
+                            .orElse(null));
+                dto.setCpf(user.getCpf());
+                dto.setCargo(user.getCargo());
+                dto.setStatus(user.getStatus());
+                dto.setInstituicaoNome(Optional.ofNullable(user.getInstituicao()) // <-- Mais seguro
+                            .map(Instituicao::getNome)
+                            .orElse(null));
+                return dto;
+            }).toList();
 
             return listDTO;
 
@@ -173,18 +177,23 @@ public class ServicoInstituicao {
                     throw new RuntimeException("Nenhum usuario encontrado");
                 }
 
-                List<UpUserDTO> listDTO = lista.stream().map(user -> new UpUserDTO(
-                        user.getNome(),
-                        user.getEmail(),
-                        user.getTelefone(),
-                        Optional.ofNullable(user.getDataNascimento())
+                List<UpUserDTO> listDTO = lista.stream().map(user -> {
+                    UpUserDTO dto = new UpUserDTO();
+                    dto.setId(user.getId()); // <-- Adiciona o ID
+                    dto.setNome(user.getNome());
+                    dto.setEmail(user.getEmail());
+                    dto.setTelefone(user.getTelefone());
+                    dto.setDataNascimento(Optional.ofNullable(user.getDataNascimento())
                                 .map(LocalDate::toString)
-                                .orElse(null),
-                        user.getCpf(),
-                        user.getCargo(),
-                        user.getStatus(),
-                        user.getInstituicao().getNome()
-                )).toList();
+                                .orElse(null));
+                    dto.setCpf(user.getCpf());
+                    dto.setCargo(user.getCargo());
+                    dto.setStatus(user.getStatus());
+                    dto.setInstituicaoNome(Optional.ofNullable(user.getInstituicao()) // <-- Mais seguro
+                                .map(Instituicao::getNome)
+                                .orElse(null));
+                    return dto;
+                }).toList();
 
                 return listDTO;
             }else{

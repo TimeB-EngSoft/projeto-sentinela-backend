@@ -84,20 +84,24 @@ public class ServicoUser {
                 throw new RuntimeException("Não há usuários com este status");
             }
 
-            List<UpUserDTO> listDTO = list.stream().map(user -> new UpUserDTO(
-                    user.getNome(),
-                    user.getEmail(),
-                    user.getTelefone(),
-                    Optional.ofNullable(user.getDataNascimento())
+            List<UpUserDTO> listDTO = list.stream().map(user -> {
+                UpUserDTO dto = new UpUserDTO();
+                dto.setId(user.getId()); 
+                dto.setNome(user.getNome());
+                dto.setEmail(user.getEmail());
+                dto.setTelefone(user.getTelefone());
+                dto.setDataNascimento(Optional.ofNullable(user.getDataNascimento())
                             .map(LocalDate::toString)
-                            .orElse(null),
-                    user.getCpf(),
-                    user.getCargo(),
-                    user.getStatus(),
-                    Optional.ofNullable(user.getInstituicao())
+                            .orElse(null));
+                dto.setCpf(user.getCpf());
+                dto.setCargo(user.getCargo());
+                dto.setStatus(user.getStatus());
+                dto.setInstituicaoNome(Optional.ofNullable(user.getInstituicao())
                             .map(Instituicao::getNome)
-                            .orElse(null)
-            )).toList();
+                            .orElse(null));
+                return dto;
+            }).toList();
+            
             return listDTO;
         }else{
             throw new RuntimeException("Argumento inválido");
@@ -309,14 +313,23 @@ public class ServicoUser {
         userRepository.save(usuario);
     }
 
-    public void cadastroCompleto(String email, String senha, String telefone, String dataNascimento, String cpf) {
-        UserAbstract user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
-
-        if (user.getStatus() != EnumUsuarioStatus.PENDENTE) {
-            throw new RuntimeException("Usuário ainda não foi aprovado pelo gestor.");
+    public void cadastroCompleto(String token, String senha, String telefone, String dataNascimento, String cpf) {
+        // Encontra o token no banco
+        PasswordResetToken resetToken = tokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Token inválido ou expirado."));
+        
+        // Verifica se o token expirou
+        if (resetToken.isExpired()) {
+            tokenRepository.delete(resetToken);
+            throw new RuntimeException("Token expirado. Solicite uma nova aprovação.");
         }
 
+        UserAbstract user = resetToken.getUsuario();
+
+        if (user.getStatus() != EnumUsuarioStatus.PENDENTE) {
+            throw new RuntimeException("Este cadastro não está pendente de finalização.");
+        }
+        
         user.setSenha(senha);
         user.setTelefone(telefone);
         user.setDataNascimento(LocalDate.parse(dataNascimento));
@@ -325,6 +338,9 @@ public class ServicoUser {
         user.setDataAtualizacao(LocalDateTime.now());
 
         userRepository.save(user);
+        
+        // Importante: Deleta o token após o uso
+        tokenRepository.delete(resetToken);
     }
 
 
@@ -419,7 +435,7 @@ public class ServicoUser {
         confirmToken.setExpiration(LocalDateTime.now().plusDays(2)); // expira em 48h
         tokenRepository.save(confirmToken);
 
-        String link = "http://projeto-sentinela-frontend.s3-website-sa-east-1.amazonaws.com/user/completarcadastro?token=" + token;
+        String link = "http://projeto-sentinela-frontend.s3-website-sa-east-1.amazonaws.com/app/authentication/finalizar-cadastro.html?token=" + token;
 
         enviarEmailAprovacao(user.getEmail(), user.getNome(), link);
     }
