@@ -194,7 +194,7 @@ public class ServicoUser {
 
         tokenRepository.save(resetToken);
 
-        String link = "http://projeto-sentinela-frontend.s3-website-sa-east-1.amazonaws.com/user/redefinir?token=" + token;
+        String link = "http://127.0.0.1:5500/app/authentication/redefinir_senha.html?token=" + token;
         enviarEmail(userAbstract.getEmail(), link, token);
     }
 
@@ -333,9 +333,9 @@ public class ServicoUser {
 
         UserAbstract user = resetToken.getUsuario();
 
-        if (user.getStatus() != EnumUsuarioStatus.PENDENTE) {
-            throw new RuntimeException("Este cadastro não está pendente de finalização.");
-        }
+        // if (user.getStatus() != EnumUsuarioStatus.PENDENTE) {
+        //    throw new RuntimeException("Este cadastro não está pendente de finalização.");
+        //}
         
         user.setSenha(senha);
         user.setTelefone(telefone);
@@ -442,7 +442,7 @@ public class ServicoUser {
         confirmToken.setExpiration(LocalDateTime.now().plusDays(2)); // expira em 48h
         tokenRepository.save(confirmToken);
 
-        String link = "http://projeto-sentinela-frontend.s3-website-sa-east-1.amazonaws.com/app/authentication/finalizar-cadastro.html?token=" + token;
+        String link = "http://127.0.0.1:5500/app/authentication/finalizar-cadastro.html?token=" + token;
 
         enviarEmailAprovacao(user.getEmail(), user.getNome(), link);
     }
