@@ -23,4 +23,7 @@ public class InstituicaoResponseDTO {
     private String areaAtuacao;
     private String descricao;
     private EnumStatusInstituicao status;
+	private String gestorResponsavel;
+	private int totalUsuarios;
+	private int totalConflitos;
 }

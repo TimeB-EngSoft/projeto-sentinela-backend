@@ -205,18 +205,53 @@ public class ServicoInstituicao {
     }
 
     public List<InstituicaoResponseDTO> listarTodasInstituicoes() {
-        return instituicaoRepository.findAll().stream()
-                .map(inst -> new InstituicaoResponseDTO(
-                        inst.getId(),
-                        inst.getNome(),
-                        inst.getSigla(),
-                        inst.getCnpj(),
-                        inst.getTelefone(),
-                        inst.getEmail(),
-                        inst.getAreaAtuacao(),
-                        inst.getDescricao(),
-                        inst.getStatus()
-                ))
+        return instituicaoRepository.findAll(Sort.by(Sort.Direction.ASC, "nome")).stream()
+                .map(inst -> {
+                    
+                    // ENCONTRAR O GESTOR RESPONSÁVEL ---
+                    String gestorNome = "—"; // Define "—" como padrão
+                    try {
+                        List<UpUserDTO> gestores = listarUsuarios(inst.getId(), "GESTOR_INSTITUICAO");
+                        
+                        
+                        Optional<UpUserDTO> gestorAtivo = gestores.stream()
+                                .filter(g -> g.getStatus() == EnumUsuarioStatus.ATIVO)
+                                .findFirst();
+
+                        if (gestorAtivo.isPresent()) {
+                            gestorNome = gestorAtivo.get().getNome();
+                        }
+                    } catch (RuntimeException e) {
+                        
+                    }
+
+                    // CONTAR TOTAL DE USUÁRIOS -
+                    int totalUsuarios = 0;
+                    try {
+                        
+                        totalUsuarios = listarUsuarios(inst.getId(), "all").size();
+                    } catch (RuntimeException e) {
+                        
+                    }
+
+                   
+                    int totalConflitos = 0; 
+
+                    return new InstituicaoResponseDTO(
+                            inst.getId(),
+                            inst.getNome(),
+                            inst.getSigla(),
+                            inst.getCnpj(),
+                            inst.getTelefone(),
+                            inst.getEmail(),
+                            inst.getAreaAtuacao(),
+                            inst.getDescricao(),
+                            inst.getStatus(),
+                            gestorNome,      // <-- DADO NOVO
+                            totalUsuarios,   // <-- DADO NOVO
+                            totalConflitos   // <-- DADO NOVO
+                    );
+                })
                 .collect(toList());
     }
 
