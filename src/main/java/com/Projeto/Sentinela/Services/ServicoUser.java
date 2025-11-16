@@ -423,7 +423,7 @@ public class ServicoUser {
         }
 
         // Caso aprovado: gera token e envia e-mail
-        user.setStatus(EnumUsuarioStatus.PENDENTE);
+        user.setStatus(EnumUsuarioStatus.ATIVO);
         user.setDataAtualizacao(LocalDateTime.now());
         userRepository.save(user);
 
