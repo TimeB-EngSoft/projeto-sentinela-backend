@@ -265,53 +265,60 @@ public class ServicoUser {
         System.out.println("✅ Senha redefinida com sucesso para o usuário: " + user.getEmail());
     }
 
-    public void cadastroParcial(String nome, String email, String instituicao, String cargo, String justificativa) {
-        if (userRepository.findByEmail(email).isPresent()) {
-            throw new RuntimeException("E-mail já cadastrado.");
+    @Transactional
+	public void cadastroParcial(String nome, String email, String instituicao, String cargo, String justificativa) {
+    
+    
+    if (userRepository.findByEmail(email).isPresent()) {
+        throw new RuntimeException("E-mail já cadastrado.");
+    }
+
+   
+    EnumCargo enumCargo;
+    try {
+        String cargoEnumKey = cargo.toUpperCase()
+                                  .replace(" DA ", " ")
+                                  .replace(" DE ", " ")
+                                  .replace(" ", "_");
+        enumCargo = EnumCargo.valueOf(cargoEnumKey);
+    } catch (Exception e) {
+        throw new IllegalArgumentException("Cargo inválido fornecido: " + cargo);
+    }
+
+    UserAbstract usuario;
+    switch (enumCargo) {
+        case GESTOR_SECRETARIA: usuario = new GestorSecretaria(); break;
+        case GESTOR_INSTITUICAO: usuario = new GestorInstituicao(); break;
+        case USUARIO_SECRETARIA: usuario = new UsuarioSecretaria(); break;
+        case USUARIO_INSTITUICAO: usuario = new UsuarioInstituicao(); break;
+        default:
+            throw new IllegalArgumentException("Cargo não suportado: " + enumCargo);
+    }
+
+    usuario.setNome(nome);
+    usuario.setEmail(email);
+    usuario.setCargo(enumCargo); 
+    usuario.setJustificativa(justificativa);
+    usuario.setStatus(EnumUsuarioStatus.PENDENTE);
+    usuario.setDataCadastro(LocalDateTime.now());
+
+    if (enumCargo == EnumCargo.GESTOR_INSTITUICAO || enumCargo == EnumCargo.USUARIO_INSTITUICAO) {
+        
+        if (instituicao == null || instituicao.trim().isEmpty()) {
+            throw new RuntimeException("O cargo " + cargo + " exige uma instituição.");
         }
 
-        UserAbstract usuario = null;
-        switch (cargo){ // dar uma olhada depois no nome dos cases, por questao de estetica!
-            case "Gestor Secretaria": usuario = new GestorSecretaria();
-            break;
-            case "Gestor Instituicao": usuario = new GestorInstituicao();
-            break;
-            case "Usuario Secretaria": usuario = new UsuarioSecretaria();
-            break;
-            case "Usuario Instituicao": usuario = new UsuarioInstituicao();
-            break;
-            default: break;
-
-        }
-
-        if (usuario == null) {
-            throw new IllegalArgumentException("O usuário precisa existir para ser cadastrado");
-        }
-        usuario.setNome(nome);
-        usuario.setEmail(email);
         System.out.println("🔍 Procurando instituição com nome: " + instituicao);
-
-
         Instituicao instituicaoEncontrada = instituicaoRepository.findByNomeContainingIgnoreCase(instituicao);
 
         if (instituicaoEncontrada == null) {
             throw new RuntimeException("Instituição não encontrada: " + instituicao);
         }
-
         usuario.setInstituicao(instituicaoEncontrada);
-        usuario.setCargo(EnumCargo.valueOf(
-                cargo.toUpperCase()
-                        .replace(" DA ", " ") // remove o “DA” antes de virar underscore
-                        .replace(" DE ", " ") // opcional, cobre casos tipo “Gestor de Secretaria”
-                        .replace(" ", "_")
-        ));
-
-        usuario.setJustificativa(justificativa);
-        usuario.setStatus(EnumUsuarioStatus.PENDENTE);
-        usuario.setDataCadastro(LocalDateTime.now());
-
-        userRepository.save(usuario);
     }
+
+    userRepository.save(usuario);
+}
 
     public void cadastroCompleto(String token, String senha, String telefone, String dataNascimento, String cpf) {
         // Encontra o token no banco
