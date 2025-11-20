@@ -132,6 +132,10 @@ public class ServicoDenuncias {
             denuncia.setTituloDenuncia(dto.getTituloDenuncia());
         }
 
+        if(!dto.getStatusDenuncia().equals(denuncia.getStatus()) && dto.getStatusDenuncia() != null){
+            denuncia.setStatus(dto.getStatusDenuncia());
+        }
+
         return denunciaRepository.save(denuncia);
     }
 

@@ -1,5 +1,6 @@
 package com.Projeto.Sentinela.Model.DTOs;
 
+import com.Projeto.Sentinela.Model.Enums.EnumStatusDenuncia;
 import com.Projeto.Sentinela.Model.Enums.EnumTipoDeDenuncia;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,4 +23,5 @@ public class DenunciaDTO {
     private String descricaoDenuncia;
     private String descricaoPartesEnvolvidas;
     private LocalDateTime dataOcorrido;
+    private EnumStatusDenuncia statusDenuncia;
 }
