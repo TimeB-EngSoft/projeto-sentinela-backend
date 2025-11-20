@@ -63,6 +63,13 @@ public class ControladorInstituicao {
         }
     }
 
+    /**
+     *
+     * @param id id da instituição que se deseja buscar.
+     * @param tipo tipo de usuário que se deseja buscar. Este pode assumir o valor "all" que retorna todos os tipos de usuário
+     * @return uma resposta HTTP com uma list de usuários de uma instituição
+     * */
+
     @GetMapping("/{id}/listUsers")
     public ResponseEntity<?> listarUsers(@PathVariable Long id, @RequestParam String tipo){
 
