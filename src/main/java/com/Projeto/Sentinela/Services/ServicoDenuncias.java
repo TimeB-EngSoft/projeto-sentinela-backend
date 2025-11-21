@@ -2,10 +2,13 @@ package com.Projeto.Sentinela.Services;
 
 import com.Projeto.Sentinela.Model.DTOs.DenunciaDTO;
 import com.Projeto.Sentinela.Model.Entities.Denuncia;
+import com.Projeto.Sentinela.Model.Entities.Instituicao;
+import com.Projeto.Sentinela.Model.Entities.Localizacao;
 import com.Projeto.Sentinela.Model.Enums.EnumFonte;
 import com.Projeto.Sentinela.Model.Enums.EnumStatusDenuncia;
 import com.Projeto.Sentinela.Model.Enums.EnumTipoDeDenuncia;
 import com.Projeto.Sentinela.Model.Repositories.DenunciaRepository;
+import com.Projeto.Sentinela.Model.Repositories.InstituicaoRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,8 @@ public class ServicoDenuncias {
 
     @Autowired
     private DenunciaRepository denunciaRepository;
+    @Autowired
+    private InstituicaoRepository instituicaoRepository;
 
     /**
      * Registra uma denúncia vinda de um formulário público (sem login).
@@ -26,50 +31,68 @@ public class ServicoDenuncias {
     public Denuncia registrarDenunciaExterna(DenunciaDTO dto) {
         Denuncia denuncia = new Denuncia();
 
-        // --- Dados do denunciante ---
+        // 1. Dados Pessoais
         denuncia.setNomeDenunciante(dto.getNomeDenunciante());
         denuncia.setEmailDenunciante(dto.getEmailDenunciante());
         denuncia.setTelefoneDenunciante(dto.getTelefoneDenunciante());
         denuncia.setCpfDenunciante(dto.getCpfDenunciante());
-        denuncia.setFonteDenuncia(EnumFonte.FORMULARIO_PUBLICO);
 
-        // --- Tipo da denúncia (conversão segura de texto para Enum) ---
+        // 2. Lógica de Vínculo e Fonte
+        if (dto.getInstituicaoId() != null) {
+            // Caso 1: Usuário de Instituição (Gestor ou Operador)
+            Instituicao inst = instituicaoRepository.findById(dto.getInstituicaoId())
+                    .orElseThrow(() -> new RuntimeException("Instituição informada não encontrada."));
+            denuncia.setInstituicao(inst);
+            denuncia.setFonteDenuncia(EnumFonte.USUARIO_INTERNO);
+        } else {
+            // Caso 2: Secretaria (Interno sem vínculo) OU Público (Externo)
+            // Se o front mandou a fonte (ex: USUARIO_INTERNO), respeitamos. Se não, é Público.
+            if (dto.getFonteDenuncia() != null) {
+                denuncia.setFonteDenuncia(dto.getFonteDenuncia());
+            } else {
+                denuncia.setFonteDenuncia(EnumFonte.FORMULARIO_PUBLICO);
+            }
+            // Deixa instituicao como null
+        }
+
+        // 3. Tipo de Denúncia
         if (dto.getTipoDenuncia() != null) {
             denuncia.setTipoDenuncia(dto.getTipoDenuncia());
         } else if (dto.getTipoDenunciaTexto() != null) {
-            // Permite que o front envie uma string (ex: "Desmatamento")
-            String tipoNormalizado = dto.getTipoDenunciaTexto()
-                    .trim()
-                    .toUpperCase()
-                    .replace(" ", "_")
-                    .replace("-", "_");
-
             try {
-                denuncia.setTipoDenuncia(EnumTipoDeDenuncia.valueOf(tipoNormalizado));
+                String normalizado = dto.getTipoDenunciaTexto().trim().toUpperCase().replace(" ", "_").replace("-", "_");
+                denuncia.setTipoDenuncia(EnumTipoDeDenuncia.valueOf(normalizado));
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Tipo de denúncia inválido: " + dto.getTipoDenunciaTexto());
+                throw new RuntimeException("Tipo inválido.");
             }
         } else {
-            throw new RuntimeException("O tipo de denúncia é obrigatório.");
+            throw new RuntimeException("Tipo é obrigatório.");
         }
 
-        // --- Informações gerais ---
+        // 4. Detalhes
         denuncia.setTituloDenuncia(dto.getTituloDenuncia());
         denuncia.setDescricaoDenuncia(dto.getDescricaoDenuncia());
         denuncia.setDescricaoPartesEnvolvidas(dto.getDescricaoPartesEnvolvidas());
-
-        // --- Datas ---
-        if (dto.getDataOcorrido() != null) {
-            denuncia.setDataOcorrido(dto.getDataOcorrido());
-        } else {
-            denuncia.setDataOcorrido(LocalDateTime.now());
-        }
-
-        // --- Status inicial ---
+        denuncia.setDataOcorrido(dto.getDataOcorrido() != null ? dto.getDataOcorrido() : LocalDateTime.now());
         denuncia.setStatus(EnumStatusDenuncia.PENDENTE);
 
-        // --- Persistência ---
+        // 5. Localização (Persistência)
+        if (dto.getCep() != null) {
+            Localizacao loc = new Localizacao();
+            loc.setCep(dto.getCep());
+            loc.setEstado(dto.getEstado());
+            loc.setMunicipio(dto.getMunicipio());
+
+            String compl = "Bairro: " + dto.getBairro() + ", Rua: " + dto.getRua();
+            if (dto.getNumero() != null) compl += ", Nº " + dto.getNumero();
+            if (dto.getReferencia() != null) compl += " (" + dto.getReferencia() + ")";
+
+            loc.setComplemento(compl);
+            denuncia.setLocalizacao(loc);
+        }
+
         return denunciaRepository.save(denuncia);
+
     }
 
 

@@ -4,11 +4,12 @@ import com.Projeto.Sentinela.Model.Enums.EnumFonte;
 import com.Projeto.Sentinela.Model.Enums.EnumStatusDenuncia;
 import com.Projeto.Sentinela.Model.Enums.EnumTipoDeDenuncia;
 import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.JoinColumn;
 import lombok.Getter;
 import lombok.Setter;
-
 import java.time.LocalDateTime;
-
 @Setter
 @Getter
 
@@ -34,6 +35,12 @@ public class Denuncia {
     private String descricaoPartesEnvolvidas;
     @Enumerated(EnumType.STRING)
     private EnumStatusDenuncia status;
+    @ManyToOne
+    @JoinColumn(name = "id_instituicao", referencedColumnName = "id", nullable = true)
+    private Instituicao instituicao; // Nova vinculação
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "cep_localizacao", referencedColumnName = "cep")
+    private Localizacao localizacao;
 
 
     public boolean vincularInstituicao(){

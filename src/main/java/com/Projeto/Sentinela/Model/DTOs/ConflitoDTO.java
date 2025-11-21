@@ -30,5 +30,11 @@ public class ConflitoDTO {
     private EnumPrioridade prioridade;
     private Instituicao instituicao;
     private Denuncia denunciaOrigem;
-
+    private String cep;
+    private String estado;
+    private String municipio; // mapeado como 'cidade' no front, ajustaremos no service
+    private String bairro;
+    private String rua;
+    private String numero; // Pode ser salvo no complemento ou num campo novo se desejar
+    private String referencia;
 }

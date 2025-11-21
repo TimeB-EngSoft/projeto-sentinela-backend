@@ -1,7 +1,10 @@
 package com.Projeto.Sentinela.Services;
 
 import com.Projeto.Sentinela.Model.DTOs.ConflitoDTO;
+import com.Projeto.Sentinela.Model.Entities.Denuncia;
+import com.Projeto.Sentinela.Model.Repositories.DenunciaRepository;
 import com.Projeto.Sentinela.Model.Entities.Conflito;
+import com.Projeto.Sentinela.Model.Entities.Localizacao;
 import com.Projeto.Sentinela.Model.Repositories.ConflitoRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +19,8 @@ public class ServicoConflito {
 
     @Autowired
     private ConflitoRepository conflitoRepository;
+    @Autowired
+    private DenunciaRepository denunciaRepository;
 
     /**
      * Cadastra um conflito diretamente (sem depender de denúncia).
@@ -43,6 +48,45 @@ public class ServicoConflito {
         conflito.setPrioridade(dto.getPrioridade());
         conflito.setFonteDenuncia(dto.getFonteDenuncia());
         conflito.setTipoConflito(dto.getTipoConflito());
+
+        // LÓGICA DE HERANÇA OU CRIAÇÃO DE LOCALIZAÇÃO
+        if (dto.getCep() != null) {
+            // 1. Prioridade: Endereço novo vindo no DTO
+            Localizacao loc = new Localizacao();
+            loc.setCep(dto.getCep());
+            loc.setEstado(dto.getEstado());
+            loc.setMunicipio(dto.getMunicipio());
+
+            // Montar complemento se necessário (igual ao ServicoDenuncias)
+            String compl = "Bairro: " + dto.getBairro() + ", Rua: " + dto.getRua();
+            if (dto.getNumero() != null) compl += ", Nº " + dto.getNumero();
+            if (dto.getReferencia() != null) compl += " (" + dto.getReferencia() + ")";
+            loc.setComplemento(compl);
+
+            conflito.setLocalizacao(loc);
+
+        } else if (dto.getDenunciaOrigem() != null && dto.getDenunciaOrigem().getId() != null) {
+            // 2. Fallback: Herdar endereço da denúncia de origem
+
+            // BUSCAR A DENÚNCIA COMPLETA NO BANCO
+            Denuncia denunciaFull = denunciaRepository.findById(dto.getDenunciaOrigem().getId())
+                    .orElse(null);
+
+            if (denunciaFull != null && denunciaFull.getLocalizacao() != null) {
+                Localizacao locOrigem = denunciaFull.getLocalizacao();
+
+                // Copiar dados para uma NOVA localização (para não compartilhar a mesma referência de objeto)
+                Localizacao novaLoc = new Localizacao();
+                novaLoc.setCep(locOrigem.getCep());
+                novaLoc.setEstado(locOrigem.getEstado());
+                novaLoc.setMunicipio(locOrigem.getMunicipio());
+                novaLoc.setLatitude(locOrigem.getLatitude());
+                novaLoc.setLongitude(locOrigem.getLongitude());
+                novaLoc.setComplemento(locOrigem.getComplemento());
+
+                conflito.setLocalizacao(novaLoc);
+            }
+        }
 
         return conflitoRepository.save(conflito);
     }
