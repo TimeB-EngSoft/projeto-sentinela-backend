@@ -2,10 +2,13 @@ package com.Projeto.Sentinela.Services;
 
 import com.Projeto.Sentinela.Model.DTOs.ConflitoDTO;
 import com.Projeto.Sentinela.Model.Entities.Denuncia;
+import com.Projeto.Sentinela.Model.Enums.EnumPrioridade;
+import com.Projeto.Sentinela.Model.Enums.EnumStatusConflito;
 import com.Projeto.Sentinela.Model.Repositories.DenunciaRepository;
 import com.Projeto.Sentinela.Model.Entities.Conflito;
 import com.Projeto.Sentinela.Model.Entities.Localizacao;
 import com.Projeto.Sentinela.Model.Repositories.ConflitoRepository;
+import com.Projeto.Sentinela.Model.Repositories.LocalizacaoRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +24,8 @@ public class ServicoConflito {
     private ConflitoRepository conflitoRepository;
     @Autowired
     private DenunciaRepository denunciaRepository;
+    @Autowired
+    private LocalizacaoRepository localizacaoRepository;
 
     /**
      * Cadastra um conflito diretamente (sem depender de denúncia).
@@ -51,44 +56,58 @@ public class ServicoConflito {
 
         // LÓGICA DE HERANÇA OU CRIAÇÃO DE LOCALIZAÇÃO
         if (dto.getCep() != null) {
-            // 1. Prioridade: Endereço novo vindo no DTO
-            Localizacao loc = new Localizacao();
+            // Tenta buscar a localização existente pelo CEP
+            Localizacao loc = localizacaoRepository.findById(dto.getCep())
+                    .orElse(new Localizacao()); // Se não existir, cria nova instância
+
+            // Se é nova (não tem CEP setado ainda ou acabamos de criar), preenchemos
+            // Se já existia, atualizamos os dados (ou mantemos, dependendo da regra. Aqui atualizo).
             loc.setCep(dto.getCep());
             loc.setEstado(dto.getEstado());
             loc.setMunicipio(dto.getMunicipio());
 
-            // Montar complemento se necessário (igual ao ServicoDenuncias)
             String compl = "Bairro: " + dto.getBairro() + ", Rua: " + dto.getRua();
             if (dto.getNumero() != null) compl += ", Nº " + dto.getNumero();
             if (dto.getReferencia() != null) compl += " (" + dto.getReferencia() + ")";
             loc.setComplemento(compl);
 
+            // Hibernate agora gerencia esta instância 'loc', seja ela nova ou recuperada do banco
             conflito.setLocalizacao(loc);
-
-        } else if (dto.getDenunciaOrigem() != null && dto.getDenunciaOrigem().getId() != null) {
-            // 2. Fallback: Herdar endereço da denúncia de origem
-
-            // BUSCAR A DENÚNCIA COMPLETA NO BANCO
-            Denuncia denunciaFull = denunciaRepository.findById(dto.getDenunciaOrigem().getId())
-                    .orElse(null);
-
-            if (denunciaFull != null && denunciaFull.getLocalizacao() != null) {
-                Localizacao locOrigem = denunciaFull.getLocalizacao();
-
-                // Copiar dados para uma NOVA localização (para não compartilhar a mesma referência de objeto)
-                Localizacao novaLoc = new Localizacao();
-                novaLoc.setCep(locOrigem.getCep());
-                novaLoc.setEstado(locOrigem.getEstado());
-                novaLoc.setMunicipio(locOrigem.getMunicipio());
-                novaLoc.setLatitude(locOrigem.getLatitude());
-                novaLoc.setLongitude(locOrigem.getLongitude());
-                novaLoc.setComplemento(locOrigem.getComplemento());
-
-                conflito.setLocalizacao(novaLoc);
-            }
         }
 
         return conflitoRepository.save(conflito);
+    }
+
+    @Transactional
+    public void gerarConflitoAutomatico(Denuncia denuncia) {
+        // Evita duplicidade
+        if (denuncia.getStatus().toString().equals("APROVADA")) {
+            // Verifica se já existe conflito para esta denúncia (lógica simples)
+            // O ideal seria ter um campo 'conflitoGerado' na denúncia ou buscar no repo
+        }
+
+        Conflito conflito = new Conflito();
+        conflito.setTituloConflito(denuncia.getTituloDenuncia());
+        conflito.setDescricaoConflito(denuncia.getDescricaoDenuncia());
+        conflito.setTipoConflito(denuncia.getTipoDenuncia());
+        conflito.setFonteDenuncia(denuncia.getFonteDenuncia());
+        conflito.setGruposVulneraveis(denuncia.getDescricaoPartesEnvolvidas());
+        conflito.setParteReclamante(denuncia.getNomeDenunciante()); // Suposição inicial
+        conflito.setParteReclamada("A investigar");
+
+        conflito.setDenunciaOrigem(denuncia);
+        conflito.setInstituicao(denuncia.getInstituicao());
+
+        conflito.setDataInicio(denuncia.getDataOcorrido());
+        conflito.setStatus(EnumStatusConflito.ATIVO);
+        conflito.setPrioridade(EnumPrioridade.MEDIA); // Prioridade padrão
+
+        // Reutiliza a localização da denúncia (já gerenciada)
+        if (denuncia.getLocalizacao() != null) {
+            conflito.setLocalizacao(denuncia.getLocalizacao());
+        }
+
+        conflitoRepository.save(conflito);
     }
 
     /**

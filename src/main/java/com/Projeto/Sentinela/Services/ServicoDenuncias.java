@@ -24,6 +24,8 @@ public class ServicoDenuncias {
     private DenunciaRepository denunciaRepository;
     @Autowired
     private InstituicaoRepository instituicaoRepository;
+    @Autowired
+    private ServicoConflito servicoConflito;
 
     /**
      * Registra uma denúncia vinda de um formulário público (sem login).
@@ -155,8 +157,13 @@ public class ServicoDenuncias {
             denuncia.setTituloDenuncia(dto.getTituloDenuncia());
         }
 
-        if(!dto.getStatusDenuncia().equals(denuncia.getStatus()) && dto.getStatusDenuncia() != null){
+        if (dto.getStatusDenuncia() != null && !dto.getStatusDenuncia().equals(denuncia.getStatus())) {
             denuncia.setStatus(dto.getStatusDenuncia());
+
+            // Automação: Se aprovada, gera conflito
+            if (dto.getStatusDenuncia() == EnumStatusDenuncia.APROVADA) {
+                servicoConflito.gerarConflitoAutomatico(denuncia);
+            }
         }
 
         return denunciaRepository.save(denuncia);
