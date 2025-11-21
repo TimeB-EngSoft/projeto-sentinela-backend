@@ -2,6 +2,13 @@ package com.Projeto.Sentinela.Services;
 
 import com.Projeto.Sentinela.Model.DTOs.ConflitoDTO;
 import com.Projeto.Sentinela.Model.Entities.Conflito;
+import com.Projeto.Sentinela.Model.Entities.GestorInstituicao;
+import com.Projeto.Sentinela.Model.Entities.GestorSecretaria;
+import com.Projeto.Sentinela.Model.Entities.UserAbstract;
+import com.Projeto.Sentinela.Model.Enums.EnumFonte;
+import com.Projeto.Sentinela.Model.Enums.EnumPrioridade;
+import com.Projeto.Sentinela.Model.Enums.EnumStatusConflito;
+import com.Projeto.Sentinela.Model.Enums.EnumTipoDeDenuncia;
 import com.Projeto.Sentinela.Model.Repositories.ConflitoRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,4 +126,34 @@ public class ServicoConflito {
 
         return conflitoRepository.save(conflito);
     }
+
+    /**
+     * Dada uma string recebida que seja compatível, case-insensitive, a qualquer um dos enums de conflito
+     * é retornado o enum correspondente
+     * */
+    public Enum<?> ConflitoEnumConverter(String tipo){
+        try{
+            EnumStatusConflito enumStatusConflito = EnumStatusConflito.valueOf(tipo);
+            return enumStatusConflito;
+        }catch(Exception e){
+            try{
+                EnumFonte fonte = EnumFonte.valueOf(tipo);
+                return fonte;
+            }catch(Exception ex){
+                try{
+                    EnumTipoDeDenuncia tipoDeDenuncia = EnumTipoDeDenuncia.valueOf(tipo);
+                    return tipoDeDenuncia;
+                }catch(Exception ex2){
+                    try{
+                        EnumPrioridade enumPrioridade = EnumPrioridade.valueOf(tipo);
+                        return  enumPrioridade;
+                    }catch(Exception ex3){
+                        throw new RuntimeException("Parâmetro não corresponde a nenhum tipo de conflito.");
+                    }
+                }
+            }
+        }
+    }
+
+
 }
