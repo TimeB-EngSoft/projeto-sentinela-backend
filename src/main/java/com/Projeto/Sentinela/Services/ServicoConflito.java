@@ -1,15 +1,13 @@
 package com.Projeto.Sentinela.Services;
 
 import com.Projeto.Sentinela.Model.DTOs.ConflitoDTO;
-import com.Projeto.Sentinela.Model.Entities.Conflito;
-import com.Projeto.Sentinela.Model.Entities.GestorInstituicao;
-import com.Projeto.Sentinela.Model.Entities.GestorSecretaria;
-import com.Projeto.Sentinela.Model.Entities.UserAbstract;
+import com.Projeto.Sentinela.Model.Entities.*;
 import com.Projeto.Sentinela.Model.Enums.EnumFonte;
 import com.Projeto.Sentinela.Model.Enums.EnumPrioridade;
 import com.Projeto.Sentinela.Model.Enums.EnumStatusConflito;
 import com.Projeto.Sentinela.Model.Enums.EnumTipoDeDenuncia;
 import com.Projeto.Sentinela.Model.Repositories.ConflitoRepository;
+import com.Projeto.Sentinela.Model.Repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,12 +15,17 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+
+import static java.util.stream.Collectors.toList;
 
 @Service
 public class ServicoConflito {
 
     @Autowired
     private ConflitoRepository conflitoRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * Cadastra um conflito diretamente (sem depender de denúncia).
@@ -131,7 +134,7 @@ public class ServicoConflito {
      * Dada uma string recebida que seja compatível, case-insensitive, a qualquer um dos enums de conflito
      * é retornado o enum correspondente
      * */
-    public Enum<?> ConflitoEnumConverter(String tipo){
+    public Enum<?> conflitoEnumConverter(String tipo){
         try{
             EnumStatusConflito enumStatusConflito = EnumStatusConflito.valueOf(tipo);
             return enumStatusConflito;
@@ -155,5 +158,89 @@ public class ServicoConflito {
         }
     }
 
+    /**
+     * Filtra conflitos pelos seus enums
+     * */
+    public List<ConflitoDTO> filtroConflitos(long id, List<String> filtros){
+
+
+        Optional<UserAbstract> u =userRepository.findById(id);
+
+        boolean ok = u.isPresent();
+        if(!ok){
+            throw new RuntimeException("ID não corresponde a nenhum usuário");
+        }
+        UserAbstract user = u.get();
+
+        boolean cargoNaSec = true;
+
+        switch(user.getCargo()){
+            case GESTOR_SECRETARIA -> {
+                cargoNaSec = true; break;
+            }
+            case GESTOR_INSTITUICAO -> {
+                cargoNaSec = false; break;
+            }
+            case USUARIO_INSTITUICAO -> {cargoNaSec = false; break;}
+            case USUARIO_SECRETARIA -> { cargoNaSec = true; break; }
+            case SECRETARIA -> {cargoNaSec = true; break;}
+        }
+
+        var enumFiltros = filtros.stream().map(this::conflitoEnumConverter)
+                .map(e-> (Enum<?>) e).toList();
+
+        List<Conflito> conflitos = listarConflitos();
+
+        if(cargoNaSec){//garante que um user de secretaria possa filtrar por todos os conflitos do sistema
+
+            List<Conflito> conflitosFiltrados = conflitos.stream()
+                    .filter(conflito -> enumFiltros.stream().allMatch(enumFiltro ->
+                            enumFiltro.equals(conflito.getStatus()) ||
+                                    enumFiltro.equals(conflito.getFonteDenuncia()) ||
+                                    enumFiltro.equals(conflito.getTipoConflito()) ||
+                                    enumFiltro.equals(conflito.getPrioridade())))
+                    .toList();
+        }else{//garante que um user de instituição possa filtrar apenas os conflitos de sua instituição
+            Instituicao inst = user.getInstituicao();
+            List<Conflito> conflitosFiltrados = conflitos.stream()
+                    .filter(conflito -> conflito.getInstituicao().equals(inst))
+                    .filter(conflito -> enumFiltros.stream().allMatch(enumFiltro ->
+                            enumFiltro.equals(conflito.getStatus()) ||
+                                    enumFiltro.equals(conflito.getFonteDenuncia()) ||
+                                    enumFiltro.equals(conflito.getTipoConflito()) ||
+                                    enumFiltro.equals(conflito.getPrioridade())))
+                    .toList();
+        }
+
+        if(cargoNaSec && conflitos.isEmpty()){
+            throw new RuntimeException("Nenhum conflito registrado");
+        }
+
+        if(!cargoNaSec && conflitos.isEmpty()){
+            throw new RuntimeException("Nenhum conflito registrado para a instituição: " + user.getInstituicao().getNome());
+        }
+
+
+        //converte para DTO a list de conflitos
+        return conflitos.stream().map(conflito ->{
+            ConflitoDTO dto = new ConflitoDTO();
+            dto.setId(conflito.getId());
+            dto.setFonteDenuncia(conflito.getFonteDenuncia());
+            dto.setTituloConflito(conflito.getTituloConflito());
+            dto.setTipoConflito(conflito.getTipoConflito());
+            dto.setDataInicio(conflito.getDataInicio());
+            dto.setDataFim(conflito.getDataFim());
+            dto.setDescricaoConflito(conflito.getDescricaoConflito());
+            dto.setParteReclamante(conflito.getParteReclamante());
+            dto.setParteReclamada(conflito.getParteReclamada());
+            dto.setGruposVulneraveis(conflito.getGruposVulneraveis());
+            dto.setStatus(conflito.getStatus());
+            dto.setPrioridade(conflito.getPrioridade());
+            dto.setInstituicao(conflito.getInstituicao());
+            dto.setDenunciaOrigem(conflito.getDenunciaOrigem());
+            return  dto;
+        })
+                .toList();
+    }
 
 }

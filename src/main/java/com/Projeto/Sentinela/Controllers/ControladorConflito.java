@@ -2,7 +2,9 @@ package com.Projeto.Sentinela.Controllers;
 
 import com.Projeto.Sentinela.Model.DTOs.ConflitoDTO;
 import com.Projeto.Sentinela.Model.Entities.Conflito;
+import com.Projeto.Sentinela.Model.Entities.UserAbstract;
 import com.Projeto.Sentinela.Services.ServicoConflito;
+import com.Projeto.Sentinela.Services.ServicoUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -61,4 +63,26 @@ public class ControladorConflito {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    /**
+     * endpoint responsável por filtrar os conflitos pelos seus enums
+     * mapeado para receber requisições GET
+     *
+     * @param id corresponde ao ID do usuário que deseja filtrar.
+     * @param filter corresponde à lista de filtros que se deseja impor;
+     * @return retorna uma requisição HTTP com os DTOs correspondetes a todos os conflitos congruentes aos filtros
+     * o uma mensagem de erro
+     *
+     * */
+    @GetMapping("/{id}/filtrar")
+    public ResponseEntity<?> filtrarConflitos(@PathVariable Long id, @RequestParam List<String> filter) {
+        try{
+
+            List<?> lista = servicoConflito.filtroConflitos(id, filter);
+            return ResponseEntity.ok().body(lista);
+        }catch (RuntimeException e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
 }
