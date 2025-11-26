@@ -442,7 +442,7 @@ public class ServicoUser {
         confirmToken.setExpiration(LocalDateTime.now().plusDays(2)); // expira em 48h
         tokenRepository.save(confirmToken);
 
-        String link = "http://127.0.0.1:5500/app/authentication/finalizar-cadastro.html?token=" + token;
+        String link = "http://localhost:63342/app/authentication/finalizar-cadastro.html?token=" + token;
 
         enviarEmailAprovacao(user.getEmail(), user.getNome(), link);
     }
