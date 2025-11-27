@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.List;
@@ -235,54 +236,50 @@ public class ServicoInstituicao {
     }
 
     public List<InstituicaoResponseDTO> listarTodasInstituicoes() {
-        return instituicaoRepository.findAll(Sort.by(Sort.Direction.ASC, "nome")).stream()
-                .map(inst -> {
-                    
-                    // ENCONTRAR O GESTOR RESPONSÁVEL ---
-                    String gestorNome = "—"; // Define "—" como padrão
-                    try {
-                        List<UpUserDTO> gestores = listarUsuarios(inst.getId(), "GESTOR_INSTITUICAO");
-                        
-                        
-                        Optional<UpUserDTO> gestorAtivo = gestores.stream()
-                                .filter(g -> g.getStatus() == EnumUsuarioStatus.ATIVO)
-                                .findFirst();
+        // Busca todas as instituições (Query 1)
+        List<Instituicao> instituicoes = instituicaoRepository.findAll(Sort.by(Sort.Direction.ASC, "nome"));
 
-                        if (gestorAtivo.isPresent()) {
-                            gestorNome = gestorAtivo.get().getNome();
-                        }
-                    } catch (RuntimeException e) {
-                        
-                    }
+        if (instituicoes.isEmpty()) return List.of();
 
-                    // CONTAR TOTAL DE USUÁRIOS -
-                    int totalUsuarios = 0;
-                    try {
-                        
-                        totalUsuarios = listarUsuarios(inst.getId(), "all").size();
-                    } catch (RuntimeException e) {
-                        
-                    }
+        // Busca contagem de usuários agrupada por ID da instituição (Query 2)
+        // Retorna lista de arrays [ID_INST, COUNT]
+        Map<Long, Long> contagemUsuarios = userRepository.countTotalUsuariosPorInstituicao().stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
 
-                   
-                    int totalConflitos = 0; 
+        // Busca nomes dos gestores ativos agrupados por ID (Query 3)
+        // Retorna lista de arrays [ID_INST, NOME_GESTOR]
+        // Se houver mais de um gestor (erro de dados), pega o primeiro (mergeFunction)
+        Map<Long, String> gestoresMap = userRepository.findGestoresAtivosMap().stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (String) row[1],
+                        (existing, replacement) -> existing
+                ));
 
-                    return new InstituicaoResponseDTO(
-                            inst.getId(),
-                            inst.getNome(),
-                            inst.getSigla(),
-                            inst.getCnpj(),
-                            inst.getTelefone(),
-                            inst.getEmail(),
-                            inst.getAreaAtuacao(),
-                            inst.getDescricao(),
-                            inst.getStatus(),
-                            gestorNome,
-                            totalUsuarios,
-                            totalConflitos
-                    );
-                })
-                .collect(toList());
+        // Monta a resposta em memória (Rápido)
+        return instituicoes.stream().map(inst -> {
+            Long totalUsers = contagemUsuarios.getOrDefault(inst.getId(), 0L);
+            String gestorNome = gestoresMap.getOrDefault(inst.getId(), "—");
+            int totalConflitos = 0; // Mantido 0 conforme original (exigiria repo de conflitos)
+
+            return new InstituicaoResponseDTO(
+                    inst.getId(),
+                    inst.getNome(),
+                    inst.getSigla(),
+                    inst.getCnpj(),
+                    inst.getTelefone(),
+                    inst.getEmail(),
+                    inst.getAreaAtuacao(),
+                    inst.getDescricao(),
+                    inst.getStatus(),
+                    gestorNome,
+                    totalUsers.intValue(),
+                    totalConflitos
+            );
+        }).collect(Collectors.toList());
     }
 
 
