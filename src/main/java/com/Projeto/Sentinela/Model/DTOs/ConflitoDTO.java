@@ -37,4 +37,8 @@ public class ConflitoDTO {
     private String rua;
     private String numero; // Pode ser salvo no complemento ou num campo novo se desejar
     private String referencia;
+
+    // Coordenadas para o Mapa
+    private Double latitude;
+    private Double longitude;
 }

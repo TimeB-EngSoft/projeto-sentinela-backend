@@ -39,4 +39,8 @@ public class DenunciaDTO {
     // Fonte (Opcional, o front manda "USUARIO_INTERNO" se estiver logado)
     private EnumFonte fonteDenuncia;
 
+    // Coordenadas para o Mapa
+    private Double latitude;
+    private Double longitude;
+
 }
