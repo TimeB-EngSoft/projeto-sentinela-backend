@@ -13,7 +13,6 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -35,6 +34,7 @@ public class ServicoInstituicao {
 
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private ServicoUser servicoUser;
 
@@ -47,12 +47,12 @@ public class ServicoInstituicao {
      */
     @Transactional
     public Instituicao cadastrarInstituicao(InstituicaoDTO dto) {
-        // 1. Validação: Verifica se já existe uma instituição com o mesmo nome.
+        // Verifica se já existe uma instituição com o mesmo nome.
         if (instituicaoRepository.findByNomeContainingIgnoreCase(dto.getNome()) != null) {
             throw new RuntimeException("Já existe uma instituição cadastrada com o nome: " + dto.getNome());
         }
 
-        // 2. Mapeamento: Converte os dados do DTO para a entidade Instituicao.
+        // Converte os dados do DTO para a entidade Instituicao.
         Instituicao novaInstituicao = new Instituicao();
         novaInstituicao.setNome(dto.getNome());
         novaInstituicao.setSigla(dto.getSigla());
@@ -62,11 +62,11 @@ public class ServicoInstituicao {
         novaInstituicao.setAreaAtuacao(dto.getAreaAtuacao());
         novaInstituicao.setDescricao(dto.getDescricao());
 
-        // 3. Define valores padrão antes de salvar.
+        // Define valores padrão antes de salvar.
         novaInstituicao.setDataCadastro(LocalDateTime.now());
         novaInstituicao.setStatus(EnumStatusInstituicao.PENDENTE); // Toda nova instituição começa como pendente.
 
-        // 4. Persistência: Chama o repositório para salvar a entidade no banco de dados.
+        // Persistência: Chama o repositório para salvar a entidade no banco de dados.
         return instituicaoRepository.save(novaInstituicao);
     }
 
@@ -81,11 +81,11 @@ public class ServicoInstituicao {
      */
     @Transactional
     public Instituicao atualizarInstituicao(long id, UpInstituicaoDTO dto) {
-        // 1. Busca a instituição no banco de dados. Se não encontrar, lança uma exceção.
+        // Busca a instituição no banco de dados. Se não encontrar, lança uma exceção.
         Instituicao instituicao = instituicaoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Instituição não encontrada com o ID: " + id));
 
-        // 2. Atualiza cada campo apenas se um novo valor foi fornecido no DTO.
+        // Atualiza cada campo apenas se um novo valor foi fornecido no DTO.
         // A função StringUtils.hasText() verifica se a String não é nula e não está vazia.
 
         if (StringUtils.hasText(dto.getNome())) {
@@ -109,7 +109,12 @@ public class ServicoInstituicao {
         if (StringUtils.hasText(dto.getDescricao())) {
             instituicao.setDescricao(dto.getDescricao());
         }
+        // Lógica de Status e Cascata
         if (dto.getStatus() != null) {
+            // Se a instituição está sendo desativada, desativar todos os usuários vinculados
+            if (dto.getStatus() == EnumStatusInstituicao.INATIVO && instituicao.getStatus() != EnumStatusInstituicao.INATIVO) {
+                desativarUsuariosDaInstituicao(instituicao);
+            }
             instituicao.setStatus(dto.getStatus());
         }
 
@@ -117,13 +122,24 @@ public class ServicoInstituicao {
         return instituicaoRepository.save(instituicao);
     }
 
+    // Método auxiliar para regra de negócio de cascata
+    private void desativarUsuariosDaInstituicao(Instituicao instituicao) {
+        List<UserAbstract> usuarios = userRepository.findByInstituicao(instituicao);
+        for (UserAbstract user : usuarios) {
+            if (user.getStatus() == EnumUsuarioStatus.ATIVO) {
+                user.setStatus(EnumUsuarioStatus.INATIVO);
+                user.setDataAtualizacao(LocalDateTime.now());
+                userRepository.save(user);
+            }
+        }
+    }
 
 
-    public List<UpUserDTO> listarUsuarios(long id,  String tipo){
+    public List<UpUserDTO> listarUsuarios(long id, String tipo) {
 
-        Instituicao i = instituicaoRepository.findById(id).orElseThrow(()-> new RuntimeException("Intituição não presente"));
+        Instituicao i = instituicaoRepository.findById(id).orElseThrow(() -> new RuntimeException("Intituição não presente"));
 
-        if(tipo.equalsIgnoreCase("all")){
+        if (tipo.equalsIgnoreCase("all")) {
             UserAbstract g = new GestorInstituicao();
             g.setInstituicao(i);
             UserAbstract u = new UsuarioInstituicao();
@@ -132,9 +148,9 @@ public class ServicoInstituicao {
             Example<UserAbstract> e1 = Example.of(g);
             Example<UserAbstract> e2 = Example.of(u);
 
-            List<UserAbstract> lista =userRepository.findAll(e1);
+            List<UserAbstract> lista = userRepository.findAll(e1);
             lista.addAll(userRepository.findAll(e2));
-            if(lista.isEmpty()){
+            if (lista.isEmpty()) {
                 throw new RuntimeException("Nenhum usuario encontrado");
             }
 
@@ -145,35 +161,34 @@ public class ServicoInstituicao {
                 dto.setEmail(user.getEmail());
                 dto.setTelefone(user.getTelefone());
                 dto.setDataNascimento(Optional.ofNullable(user.getDataNascimento())
-                            .map(LocalDate::toString)
-                            .orElse(null));
+                        .map(LocalDate::toString)
+                        .orElse(null));
                 dto.setCpf(user.getCpf());
                 dto.setCargo(user.getCargo());
                 dto.setStatus(user.getStatus());
                 dto.setInstituicaoNome(Optional.ofNullable(user.getInstituicao()) // <-- Mais seguro
-                            .map(Instituicao::getNome)
-                            .orElse(null));
+                        .map(Instituicao::getNome)
+                        .orElse(null));
                 return dto;
             }).toList();
 
             return listDTO;
-
         }
 
         try {
             if (servicoUser.enumConverter(tipo) instanceof EnumCargo) {
                 EnumCargo c = (EnumCargo) servicoUser.enumConverter(tipo);
 
-                //Instanciação de usuários para servir como exemplo para querry no BD
+                // Instanciação de usuários para servir como exemplo para query no BD
                 UserAbstract g = new GestorInstituicao();
                 g.setInstituicao(i);
                 g.setCargo(c);
 
                 Example<UserAbstract> e1 = Example.of(g);
 
-                List<UserAbstract> lista =userRepository.findAll(e1);
+                List<UserAbstract> lista = userRepository.findAll(e1);
 
-                if(lista.isEmpty()){
+                if (lista.isEmpty()) {
                     throw new RuntimeException("Nenhum usuario encontrado");
                 }
 
@@ -184,22 +199,22 @@ public class ServicoInstituicao {
                     dto.setEmail(user.getEmail());
                     dto.setTelefone(user.getTelefone());
                     dto.setDataNascimento(Optional.ofNullable(user.getDataNascimento())
-                                .map(LocalDate::toString)
-                                .orElse(null));
+                            .map(LocalDate::toString)
+                            .orElse(null));
                     dto.setCpf(user.getCpf());
                     dto.setCargo(user.getCargo());
                     dto.setStatus(user.getStatus());
                     dto.setInstituicaoNome(Optional.ofNullable(user.getInstituicao()) // <-- Mais seguro
-                                .map(Instituicao::getNome)
-                                .orElse(null));
+                            .map(Instituicao::getNome)
+                            .orElse(null));
                     return dto;
                 }).toList();
 
                 return listDTO;
-            }else{
+            } else {
                 throw new RuntimeException("Parametro não corresponde a um cargo");
             }
-        }catch(IllegalArgumentException ex){
+        } catch (IllegalArgumentException ex) {
             throw new RuntimeException(ex.getMessage());
         }
     }
@@ -247,9 +262,9 @@ public class ServicoInstituicao {
                             inst.getAreaAtuacao(),
                             inst.getDescricao(),
                             inst.getStatus(),
-                            gestorNome,      // <-- DADO NOVO
-                            totalUsuarios,   // <-- DADO NOVO
-                            totalConflitos   // <-- DADO NOVO
+                            gestorNome,
+                            totalUsuarios,
+                            totalConflitos
                     );
                 })
                 .collect(toList());

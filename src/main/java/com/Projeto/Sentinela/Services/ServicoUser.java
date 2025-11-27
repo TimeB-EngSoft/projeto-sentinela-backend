@@ -115,6 +115,25 @@ public class ServicoUser {
         UserAbstract usuario = userRepository.findById(idUser)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado: id=" + idUser));
 
+        // Define novos valores (ou mantém os antigos) para verificação de regras
+        EnumCargo novoCargo = dto.getCargo() != null ? dto.getCargo() : usuario.getCargo();
+        EnumUsuarioStatus novoStatus = dto.getStatus() != null ? dto.getStatus() : usuario.getStatus();
+
+        // Determina a instituição alvo
+        Instituicao instituicaoAlvo = usuario.getInstituicao();
+        if (StringUtils.hasText(dto.getInstituicaoNome())) {
+            Instituicao instEncontrada = instituicaoRepository.findByNomeContainingIgnoreCase(dto.getInstituicaoNome());
+            if (instEncontrada == null) {
+                throw new RuntimeException("Instituição não encontrada: " + dto.getInstituicaoNome());
+            }
+            instituicaoAlvo = instEncontrada;
+        }
+
+        // [REGRA DE NEGÓCIO] Gestor Único na Atualização
+        if (novoCargo == EnumCargo.GESTOR_INSTITUICAO && novoStatus == EnumUsuarioStatus.ATIVO && instituicaoAlvo != null) {
+            validarGestorUnico(instituicaoAlvo, usuario.getId());
+        }
+
         // Atualiza email (verifica duplicidade)
         if (StringUtils.hasText(dto.getEmail()) && !dto.getEmail().equalsIgnoreCase(usuario.getEmail())) {
             if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
@@ -123,50 +142,34 @@ public class ServicoUser {
             usuario.setEmail(dto.getEmail());
         }
 
-        // Atualiza nome
-        if (StringUtils.hasText(dto.getNome())) {
-            usuario.setNome(dto.getNome());
-        }
+        if (StringUtils.hasText(dto.getNome())) usuario.setNome(dto.getNome());
+        if (StringUtils.hasText(dto.getTelefone())) usuario.setTelefone(dto.getTelefone());
+        if (StringUtils.hasText(dto.getCpf())) usuario.setCpf(dto.getCpf());
+        if (dto.getDataNascimento() != null) usuario.setDataNascimento(LocalDate.parse(dto.getDataNascimento()));
 
-        // Atualiza telefone
-        if (StringUtils.hasText(dto.getTelefone())) {
-            usuario.setTelefone(dto.getTelefone());
-        }
-
-        // Atualiza CPF
-        if (StringUtils.hasText(dto.getCpf())) {
-            usuario.setCpf(dto.getCpf());
-        }
-
-        // Atualiza data de nascimento
-        if (dto.getDataNascimento() != null) {
-            usuario.setDataNascimento(LocalDate.parse(dto.getDataNascimento()));
-        }
-
-        // Atualiza status
-        if (dto.getStatus() != null) {
-            usuario.setStatus(dto.getStatus());
-        }
-
-        // Atualiza cargo
-        if (dto.getCargo() != null) {
-            usuario.setCargo(dto.getCargo());
-        }
-
-        // Atualiza instituição (por nome)
-        if (StringUtils.hasText(dto.getInstituicaoNome())) {
-            Instituicao inst = instituicaoRepository.findByNomeContainingIgnoreCase(dto.getInstituicaoNome());
-            if (inst == null) {
-                throw new RuntimeException("Instituição não encontrada: " + dto.getInstituicaoNome());
-            }
-            usuario.setInstituicao(inst);
-        }
-
-        // Atualiza a data de modificação
+        usuario.setStatus(novoStatus);
+        usuario.setCargo(novoCargo);
+        usuario.setInstituicao(instituicaoAlvo);
         usuario.setDataAtualizacao(LocalDateTime.now());
 
         return userRepository.save(usuario);
     }
+
+    private void validarGestorUnico(Instituicao instituicao, Long usuarioIdIgnorar) {
+        Optional<UserAbstract> gestorExistente = userRepository.findByInstituicaoAndCargoAndStatus(
+                instituicao, EnumCargo.GESTOR_INSTITUICAO, EnumUsuarioStatus.ATIVO
+        );
+
+        if (gestorExistente.isPresent()) {
+            UserAbstract gestor = gestorExistente.get();
+            if (!gestor.getId().equals(usuarioIdIgnorar)) {
+                throw new RuntimeException("A instituição '" + instituicao.getNome() +
+                        "' já possui um gestor ativo (" + gestor.getNome() + "). " +
+                        "Desative o gestor atual antes de atribuir um novo.");
+            }
+        }
+    }
+
 
     public UserAbstract getData (long id){
         UserAbstract a = userRepository.findById(id).orElseThrow(()-> new RuntimeException("Usuário não encontrado"));
@@ -429,21 +432,23 @@ public class ServicoUser {
             return;
         }
 
-        // Caso aprovado: gera token e envia e-mail
+        // [REGRA DE NEGÓCIO] Gestor Único na Aprovação
+        if (user.getCargo() == EnumCargo.GESTOR_INSTITUICAO && user.getInstituicao() != null) {
+            validarGestorUnico(user.getInstituicao(), user.getId());
+        }
+
         user.setStatus(EnumUsuarioStatus.ATIVO);
         user.setDataAtualizacao(LocalDateTime.now());
         userRepository.save(user);
 
         String token = UUID.randomUUID().toString();
-
         PasswordResetToken confirmToken = new PasswordResetToken();
         confirmToken.setToken(token);
         confirmToken.setUsuario(user);
-        confirmToken.setExpiration(LocalDateTime.now().plusDays(2)); // expira em 48h
+        confirmToken.setExpiration(LocalDateTime.now().plusDays(2));
         tokenRepository.save(confirmToken);
 
         String link = "http://localhost:63342/app/authentication/finalizar-cadastro.html?token=" + token;
-
         enviarEmailAprovacao(user.getEmail(), user.getNome(), link);
     }
 
