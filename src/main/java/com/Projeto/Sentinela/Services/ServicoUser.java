@@ -490,5 +490,50 @@ public class ServicoUser {
         }
     }
 
+    public List<UpUserDTO> listarUsuariosOtimizado(String statusStr, Long instituicaoId, String cargoStr, String filtroEspecial) {
+
+        // Tratamento do Status
+        EnumUsuarioStatus status = null;
+        if (statusStr != null && !statusStr.isBlank()) {
+            if (enumConverter(statusStr) instanceof EnumUsuarioStatus) {
+                status = (EnumUsuarioStatus) enumConverter(statusStr);
+            }
+        }
+
+        // Tratamento da Lista de Cargos
+        List<EnumCargo> cargosFiltrados = null;
+
+        if (cargoStr != null && !cargoStr.isBlank()) {
+            try {
+                cargosFiltrados = List.of(EnumCargo.valueOf(cargoStr));
+            } catch (Exception e) { }
+        }
+        else if ("GESTORES".equalsIgnoreCase(filtroEspecial)) {
+            cargosFiltrados = List.of(EnumCargo.GESTOR_SECRETARIA, EnumCargo.GESTOR_INSTITUICAO);
+        }
+
+        // Executa a consulta
+        List<UserAbstract> list = userRepository.findByFilters(status, instituicaoId, cargosFiltrados);
+
+        if (list.isEmpty()) {
+            return List.of();
+        }
+
+        return list.stream().map(this::convertToDTO).toList();
+    }
+
+    private UpUserDTO convertToDTO(UserAbstract user) {
+        UpUserDTO dto = new UpUserDTO();
+        dto.setId(user.getId());
+        dto.setNome(user.getNome());
+        dto.setEmail(user.getEmail());
+        dto.setTelefone(user.getTelefone());
+        dto.setDataNascimento(Optional.ofNullable(user.getDataNascimento()).map(LocalDate::toString).orElse(null));
+        dto.setCpf(user.getCpf());
+        dto.setCargo(user.getCargo());
+        dto.setStatus(user.getStatus());
+        dto.setInstituicaoNome(Optional.ofNullable(user.getInstituicao()).map(Instituicao::getNome).orElse(null));
+        return dto;
+    }
 
 }

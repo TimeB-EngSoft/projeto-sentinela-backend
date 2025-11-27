@@ -64,9 +64,14 @@ public class ControladorUser {
     }
 
     @GetMapping("/listByStatus")
-    public ResponseEntity<?> ListByStatus(@RequestParam String status) {
+    public ResponseEntity<?> ListByStatus(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long instituicaoId,
+            @RequestParam(required = false) String cargo,
+            @RequestParam(required = false) String filtroEspecial // Ex: 'GESTORES'
+    ) {
         try {
-            return ResponseEntity.ok(servicoUser.listUserByStatus(status));
+            return ResponseEntity.ok(servicoUser.listarUsuariosOtimizado(status, instituicaoId, cargo, filtroEspecial));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

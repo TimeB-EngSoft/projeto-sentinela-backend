@@ -27,9 +27,17 @@ public interface UserRepository extends JpaRepository<UserAbstract, Long> {
     // Métod para verificar se já existe um gestor ativo na instituição
     Optional<UserAbstract> findByInstituicaoAndCargoAndStatus(Instituicao instituicao, EnumCargo cargo, EnumUsuarioStatus status);
 
-    // Busca usuários por status e filtro opcional de instituição (já implementado na resposta anterior)
-    @Query("SELECT u FROM UserAbstract u WHERE u.status = :status AND (:instNome IS NULL OR LOWER(u.instituicao.nome) = LOWER(:instNome))")
-    List<UserAbstract> findByStatusAndInstituicaoOptional(@Param("status") EnumUsuarioStatus status, @Param("instNome") String instNome);
+    // Busca usuários com filtros dinâmicos. Se o parâmetro for nulo, ele é ignorado.
+    // COALESCE é usado para tratar a lista nula (ignora o filtro se a lista for nula).
+    @Query("SELECT u FROM UserAbstract u " +
+            "WHERE (:status IS NULL OR u.status = :status) " +
+            "AND (:instituicaoId IS NULL OR u.instituicao.id = :instituicaoId) " +
+            "AND ((:cargos) IS NULL OR u.cargo IN (:cargos))")
+    List<UserAbstract> findByFilters(
+            @Param("status") EnumUsuarioStatus status,
+            @Param("instituicaoId") Long instituicaoId,
+            @Param("cargos") List<EnumCargo> cargos
+    );
 
     // Conta usuários agrupando por ID da instituição (Uma única consulta para todas)
     @Query("SELECT u.instituicao.id, COUNT(u) FROM UserAbstract u WHERE u.instituicao IS NOT NULL GROUP BY u.instituicao.id")
