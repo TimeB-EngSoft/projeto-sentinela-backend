@@ -157,15 +157,6 @@ public class ServicoDenuncias {
             denuncia.setTituloDenuncia(dto.getTituloDenuncia());
         }
 
-        if (dto.getStatusDenuncia() != null && !dto.getStatusDenuncia().equals(denuncia.getStatus())) {
-            denuncia.setStatus(dto.getStatusDenuncia());
-
-            // Automação: Se aprovada, gera conflito
-            if (dto.getStatusDenuncia() == EnumStatusDenuncia.APROVADA) {
-                servicoConflito.gerarConflitoAutomatico(denuncia);
-            }
-        }
-
         return denunciaRepository.save(denuncia);
     }
 
