@@ -111,23 +111,38 @@ public class ServicoInstituicao {
         }
         // Lógica de Status e Cascata
         if (dto.getStatus() != null) {
-            // Se a instituição está sendo desativada, desativar todos os usuários vinculados
+            // Desativar todos os usuarios pertencentes a instituicao
             if (dto.getStatus() == EnumStatusInstituicao.INATIVO && instituicao.getStatus() != EnumStatusInstituicao.INATIVO) {
                 desativarUsuariosDaInstituicao(instituicao);
+            }
+            // Reativar todos os usuarios pertencentes a instituicao
+            else if (dto.getStatus() == EnumStatusInstituicao.ATIVO && instituicao.getStatus() == EnumStatusInstituicao.INATIVO) {
+                reativarUsuariosDaInstituicao(instituicao);
             }
             instituicao.setStatus(dto.getStatus());
         }
 
-        // 3. Salva a entidade atualizada no banco de dados.
+        // Salva a entidade atualizada no banco de dados.
         return instituicaoRepository.save(instituicao);
     }
 
-    // Método auxiliar para regra de negócio de cascata
     private void desativarUsuariosDaInstituicao(Instituicao instituicao) {
         List<UserAbstract> usuarios = userRepository.findByInstituicao(instituicao);
         for (UserAbstract user : usuarios) {
             if (user.getStatus() == EnumUsuarioStatus.ATIVO) {
                 user.setStatus(EnumUsuarioStatus.INATIVO);
+                user.setDataAtualizacao(LocalDateTime.now());
+                userRepository.save(user);
+            }
+        }
+    }
+
+    private void reativarUsuariosDaInstituicao(Instituicao instituicao) {
+        List<UserAbstract> usuarios = userRepository.findByInstituicao(instituicao);
+        for (UserAbstract user : usuarios) {
+            // Reativa apenas quem estava INATIVO (evita reativar bloqueados/pendentes indevidamente se não for a regra)
+            if (user.getStatus() == EnumUsuarioStatus.INATIVO) {
+                user.setStatus(EnumUsuarioStatus.ATIVO);
                 user.setDataAtualizacao(LocalDateTime.now());
                 userRepository.save(user);
             }
