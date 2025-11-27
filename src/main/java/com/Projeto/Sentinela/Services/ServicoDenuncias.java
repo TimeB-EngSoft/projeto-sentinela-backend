@@ -133,12 +133,16 @@ public class ServicoDenuncias {
             denuncia.setDescricaoPartesEnvolvidas(dto.getDescricaoPartesEnvolvidas());
         }
 
-        if(null != dto.getTipoDenuncia() && dto.getTipoDenuncia().equals(denuncia.getTipoDenuncia())){
+        if(dto.getTipoDenuncia() != null){
             denuncia.setTipoDenuncia(dto.getTipoDenuncia());
         }
 
         if(dto.getDataOcorrido() != null && !dto.getDataOcorrido().equals(denuncia.getDataOcorrido())  ){
             denuncia.setDataOcorrido(dto.getDataOcorrido());
+        }
+
+        if(dto.getStatusDenuncia() != null){
+            denuncia.setStatus(dto.getStatusDenuncia());
         }
 
         if(vs(dto.getEmailDenunciante())){
