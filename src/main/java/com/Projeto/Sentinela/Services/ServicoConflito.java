@@ -54,24 +54,8 @@ public class ServicoConflito {
         conflito.setFonteDenuncia(dto.getFonteDenuncia());
         conflito.setTipoConflito(dto.getTipoConflito());
 
-        // LÓGICA DE HERANÇA OU CRIAÇÃO DE LOCALIZAÇÃO
         if (dto.getCep() != null) {
-            // Tenta buscar a localização existente pelo CEP
-            Localizacao loc = localizacaoRepository.findById(dto.getCep())
-                    .orElse(new Localizacao()); // Se não existir, cria nova instância
-
-            // Se é nova (não tem CEP setado ainda ou acabamos de criar), preenchemos
-            // Se já existia, atualizamos os dados (ou mantemos, dependendo da regra. Aqui atualizo).
-            loc.setCep(dto.getCep());
-            loc.setEstado(dto.getEstado());
-            loc.setMunicipio(dto.getMunicipio());
-
-            String compl = "Bairro: " + dto.getBairro() + ", Rua: " + dto.getRua();
-            if (dto.getNumero() != null) compl += ", Nº " + dto.getNumero();
-            if (dto.getReferencia() != null) compl += " (" + dto.getReferencia() + ")";
-            loc.setComplemento(compl);
-
-            // Hibernate agora gerencia esta instância 'loc', seja ela nova ou recuperada do banco
+            Localizacao loc = salvarOuAtualizarLocalizacao(dto);
             conflito.setLocalizacao(loc);
         }
 
@@ -180,6 +164,32 @@ public class ServicoConflito {
             conflito.setDenunciaOrigem(dto.getDenunciaOrigem());
         }
 
+        if (dto.getCep() != null) {
+            Localizacao loc = salvarOuAtualizarLocalizacao(dto);
+            conflito.setLocalizacao(loc);
+        }
+
         return conflitoRepository.save(conflito);
+    }
+
+    // Métod auxiliar para evitar repetição e garantir salvamento correto
+    private Localizacao salvarOuAtualizarLocalizacao(ConflitoDTO dto) {
+        Localizacao loc = localizacaoRepository.findById(dto.getCep())
+                .orElse(new Localizacao());
+
+        loc.setCep(dto.getCep());
+        loc.setEstado(dto.getEstado());
+        loc.setMunicipio(dto.getMunicipio());
+
+        // AQUI ESTAVA FALTANDO:
+        if (dto.getLatitude() != null) loc.setLatitude(dto.getLatitude());
+        if (dto.getLongitude() != null) loc.setLongitude(dto.getLongitude());
+
+        String compl = "Bairro: " + dto.getBairro() + ", Rua: " + dto.getRua();
+        if (dto.getNumero() != null) compl += ", Nº " + dto.getNumero();
+        if (dto.getReferencia() != null) compl += " (" + dto.getReferencia() + ")";
+        loc.setComplemento(compl);
+
+        return localizacaoRepository.save(loc); // Garante que salva/atualiza no banco
     }
 }

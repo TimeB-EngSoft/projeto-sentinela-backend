@@ -9,6 +9,7 @@ import com.Projeto.Sentinela.Model.Enums.EnumStatusDenuncia;
 import com.Projeto.Sentinela.Model.Enums.EnumTipoDeDenuncia;
 import com.Projeto.Sentinela.Model.Repositories.DenunciaRepository;
 import com.Projeto.Sentinela.Model.Repositories.InstituicaoRepository;
+import com.Projeto.Sentinela.Model.Repositories.LocalizacaoRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,8 @@ public class ServicoDenuncias {
     @Autowired
     private InstituicaoRepository instituicaoRepository;
     @Autowired
+    private LocalizacaoRepository localizacaoRepository;
+    @Autowired
     private ServicoConflito servicoConflito;
 
     /**
@@ -33,13 +36,13 @@ public class ServicoDenuncias {
     public Denuncia registrarDenunciaExterna(DenunciaDTO dto) {
         Denuncia denuncia = new Denuncia();
 
-        // 1. Dados Pessoais
+        // Dados Pessoais
         denuncia.setNomeDenunciante(dto.getNomeDenunciante());
         denuncia.setEmailDenunciante(dto.getEmailDenunciante());
         denuncia.setTelefoneDenunciante(dto.getTelefoneDenunciante());
         denuncia.setCpfDenunciante(dto.getCpfDenunciante());
 
-        // 2. Lógica de Vínculo e Fonte
+        // Lógica de Vínculo e Fonte
         if (dto.getInstituicaoId() != null) {
             // Caso 1: Usuário de Instituição (Gestor ou Operador)
             Instituicao inst = instituicaoRepository.findById(dto.getInstituicaoId())
@@ -57,7 +60,7 @@ public class ServicoDenuncias {
             // Deixa instituicao como null
         }
 
-        // 3. Tipo de Denúncia
+        // Tipo de Denúncia
         if (dto.getTipoDenuncia() != null) {
             denuncia.setTipoDenuncia(dto.getTipoDenuncia());
         } else if (dto.getTipoDenunciaTexto() != null) {
@@ -71,25 +74,34 @@ public class ServicoDenuncias {
             throw new RuntimeException("Tipo é obrigatório.");
         }
 
-        // 4. Detalhes
+        // Detalhes
         denuncia.setTituloDenuncia(dto.getTituloDenuncia());
         denuncia.setDescricaoDenuncia(dto.getDescricaoDenuncia());
         denuncia.setDescricaoPartesEnvolvidas(dto.getDescricaoPartesEnvolvidas());
         denuncia.setDataOcorrido(dto.getDataOcorrido() != null ? dto.getDataOcorrido() : LocalDateTime.now());
         denuncia.setStatus(EnumStatusDenuncia.PENDENTE);
 
-        // 5. Localização (Persistência)
+        // Localização (Persistência)
         if (dto.getCep() != null) {
-            Localizacao loc = new Localizacao();
+            // Busca se já existe para não duplicar ou dar erro se for PK
+            Localizacao loc = localizacaoRepository.findById(dto.getCep())
+                    .orElse(new Localizacao());
+
             loc.setCep(dto.getCep());
             loc.setEstado(dto.getEstado());
             loc.setMunicipio(dto.getMunicipio());
 
+            // SALVAR AS COORDENADAS
+            if (dto.getLatitude() != null) loc.setLatitude(dto.getLatitude());
+            if (dto.getLongitude() != null) loc.setLongitude(dto.getLongitude());
+
             String compl = "Bairro: " + dto.getBairro() + ", Rua: " + dto.getRua();
             if (dto.getNumero() != null) compl += ", Nº " + dto.getNumero();
             if (dto.getReferencia() != null) compl += " (" + dto.getReferencia() + ")";
-
             loc.setComplemento(compl);
+
+            // Salva explicitamente a localização antes de associar
+            localizacaoRepository.save(loc);
             denuncia.setLocalizacao(loc);
         }
 
