@@ -18,14 +18,30 @@ public class ControladorRelatorios {
 
     @PostMapping("/gerar")
     public ResponseEntity<byte[]> gerarRelatorio(@RequestBody FiltroRelatorioDTO filtro) {
-        byte[] dados = servicoRelatorios.gerarRelatorioCsv(filtro);
+        // Em um sistema com Spring Security, pegaríamos o usuário do contexto.
+        // Aqui simulamos ou pegamos do DTO se você adicionar o campo 'emailUsuario'.
+        String usuario = "Gestor Solicitante";
 
-        String filename = "relatorio_sentinela_" + System.currentTimeMillis() + ".csv";
+        byte[] dados = servicoRelatorios.gerarRelatorio(filtro, usuario);
+        String formato = filtro.getFormato() != null ? filtro.getFormato().toUpperCase() : "CSV";
+
+        String filename = "relatoriosentinela" + System.currentTimeMillis();
+        MediaType mediaType;
+
+        if ("PDF".equals(formato)) {
+            filename += ".pdf";
+            mediaType = MediaType.APPLICATION_PDF;
+        } else if ("XLSX".equals(formato)) {
+            filename += ".xlsx";
+            mediaType = MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        } else {
+            filename += ".csv";
+            mediaType = MediaType.parseMediaType("text/csv");
+        }
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
-                .contentType(MediaType.parseMediaType("text/csv"))
+                .contentType(mediaType)
                 .body(dados);
     }
 }
-

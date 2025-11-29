@@ -5,6 +5,7 @@ import com.Projeto.Sentinela.Model.Entities.Denuncia;
 import com.Projeto.Sentinela.Model.Entities.Instituicao;
 import com.Projeto.Sentinela.Model.Entities.Localizacao;
 import com.Projeto.Sentinela.Model.Enums.EnumFonte;
+import com.Projeto.Sentinela.Model.Enums.EnumNivelAuditoria;
 import com.Projeto.Sentinela.Model.Enums.EnumStatusDenuncia;
 import com.Projeto.Sentinela.Model.Enums.EnumTipoDeDenuncia;
 import com.Projeto.Sentinela.Model.Repositories.DenunciaRepository;
@@ -29,6 +30,8 @@ public class ServicoDenuncias {
     private LocalizacaoRepository localizacaoRepository;
     @Autowired
     private ServicoConflito servicoConflito;
+    @Autowired
+    private ServicoAuditoria servicoAuditoria;
 
     /**
      * Registra uma denúncia vinda de um formulário público (sem login).
@@ -105,7 +108,20 @@ public class ServicoDenuncias {
             denuncia.setLocalizacao(loc);
         }
 
-        return denunciaRepository.save(denuncia);
+        Denuncia salva = denunciaRepository.save(denuncia);
+
+        // LOG
+        String autor = dto.getNomeDenunciante() != null ? dto.getNomeDenunciante() : "Anônimo";
+        servicoAuditoria.registrarLog(
+                autor,
+                "NOVA_DENUNCIA",
+                "Denúncias",
+                "Nova denúncia registrada: " + salva.getTituloDenuncia() + " (" + salva.getTipoDenuncia() + ")",
+                EnumNivelAuditoria.INFO,
+                "IP_CLIENTE" // Idealmente pegar do request
+        );
+
+        return salva;
 
     }
 

@@ -3,6 +3,7 @@ package com.Projeto.Sentinela.Services;
 import com.Projeto.Sentinela.Model.DTOs.UpUserDTO;
 import com.Projeto.Sentinela.Model.Entities.*;
 import com.Projeto.Sentinela.Model.Enums.EnumCargo;
+import com.Projeto.Sentinela.Model.Enums.EnumNivelAuditoria;
 import com.Projeto.Sentinela.Model.Enums.EnumUsuarioStatus;
 import com.Projeto.Sentinela.Model.Repositories.InstituicaoRepository;
 import com.Projeto.Sentinela.Model.Repositories.PasswordResetTokenRepository;
@@ -40,6 +41,8 @@ public class ServicoUser {
     private JavaMailSender mailSender;
     @Autowired
     private InstituicaoRepository instituicaoRepository;
+    @Autowired
+    private ServicoAuditoria servicoAuditoria;
 
     /*
     * permite que sejam passados parâmetros na forma de string, case-insensitive, para qualquer um dos enuns de user
@@ -359,12 +362,20 @@ public class ServicoUser {
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
 
         if (usuario.getStatus() != EnumUsuarioStatus.ATIVO) {
+            servicoAuditoria.registrarLog(email, "LOGIN_FALHA", "Autenticação", "Tentativa em conta inativa/pendente", EnumNivelAuditoria.AVISO, "127.0.0.1");
             throw new RuntimeException("O cadastro ainda não foi aprovado ou está inativo.");
         }
 
         if (!usuario.getSenha().equals(senha)) {
+            servicoAuditoria.registrarLog(email, "LOGIN_FALHA", "Autenticação", "Senha incorreta", EnumNivelAuditoria.AVISO, "127.0.0.1");
             throw new RuntimeException("Senha incorreta.");
         }
+
+        // LOG DE SUCESSO
+        servicoAuditoria.registrarLog(
+                usuario.getEmail(), "LOGIN", "Autenticação",
+                "Login realizado com sucesso", EnumNivelAuditoria.INFO, "127.0.0.1"
+        );
 
         userRepository.save(usuario);
 
@@ -376,6 +387,10 @@ public class ServicoUser {
 
         if (userOpt.isPresent()) {
             UserAbstract user = userOpt.get();
+            servicoAuditoria.registrarLog(
+                    email, "LOGOUT", "Autenticação",
+                    "Usuário saiu do sistema", EnumNivelAuditoria.INFO, "127.0.0.1"
+            );
             userRepository.save(user);
             System.out.println("✅ Logout registrado para: " + email);
         } else {

@@ -2,6 +2,7 @@ package com.Projeto.Sentinela.Services;
 
 import com.Projeto.Sentinela.Model.DTOs.ConflitoDTO;
 import com.Projeto.Sentinela.Model.Entities.Denuncia;
+import com.Projeto.Sentinela.Model.Enums.EnumNivelAuditoria;
 import com.Projeto.Sentinela.Model.Enums.EnumPrioridade;
 import com.Projeto.Sentinela.Model.Enums.EnumStatusConflito;
 import com.Projeto.Sentinela.Model.Repositories.DenunciaRepository;
@@ -26,6 +27,8 @@ public class ServicoConflito {
     private DenunciaRepository denunciaRepository;
     @Autowired
     private LocalizacaoRepository localizacaoRepository;
+    @Autowired
+    private ServicoAuditoria servicoAuditoria;
 
     /**
      * Cadastra um conflito diretamente (sem depender de denúncia).
@@ -59,7 +62,22 @@ public class ServicoConflito {
             conflito.setLocalizacao(loc);
         }
 
-        return conflitoRepository.save(conflito);
+        Conflito salvo = conflitoRepository.save(conflito);
+
+        // LOG
+        // Aqui assumimos um usuário genérico ou passamos no DTO
+        String responsavel = "Gestor";
+
+        servicoAuditoria.registrarLog(
+                responsavel,
+                "NOVO_CONFLITO",
+                "Conflitos",
+                "Conflito cadastrado: " + salvo.getTituloConflito() + " - Prioridade: " + salvo.getPrioridade(),
+                EnumNivelAuditoria.INFO,
+                "127.0.0.1"
+        );
+
+        return salvo;
     }
 
     @Transactional
