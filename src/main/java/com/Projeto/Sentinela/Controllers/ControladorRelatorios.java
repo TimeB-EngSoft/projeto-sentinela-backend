@@ -18,9 +18,14 @@ public class ControladorRelatorios {
 
     @PostMapping("/gerar")
     public ResponseEntity<byte[]> gerarRelatorio(@RequestBody FiltroRelatorioDTO filtro) {
-        // Em um sistema com Spring Security, pegaríamos o usuário do contexto.
-        // Aqui simulamos ou pegamos do DTO se você adicionar o campo 'emailUsuario'.
-        String usuario = "Gestor Solicitante";
+
+        // Captura o e-mail enviado pelo front-end no DTO
+        String usuario = filtro.getEmailUsuario();
+
+        // Fallback caso venha nulo
+        if (usuario == null || usuario.trim().isEmpty()) {
+            usuario = "Usuario Nao Identificado";
+        }
 
         byte[] dados = servicoRelatorios.gerarRelatorio(filtro, usuario);
         String formato = filtro.getFormato() != null ? filtro.getFormato().toUpperCase() : "CSV";

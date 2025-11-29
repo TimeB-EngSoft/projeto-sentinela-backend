@@ -13,4 +13,5 @@ public class FiltroRelatorioDTO {
     private String estado;
     private String status; // ativo, encerrado, etc.
     private String formato; // csv
+    private String emailUsuario;
 }
