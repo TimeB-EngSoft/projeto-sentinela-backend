@@ -19,6 +19,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import java.util.concurrent.CompletableFuture;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -474,19 +475,21 @@ public class ServicoUser {
         tokenRepository.save(confirmToken);
 
         String link = frontendUrl + "app/authentication/finalizar-cadastro.html?token=" + token;
-        try {
-			enviarEmailAprovacao(user.getEmail(), user.getNome(), link);
-		} catch (Exception e) {
-			System.err.println("AVISO: Usuário aprovado no banco, mas falha ao enviar e-mail: " + e.getMessage());
-			servicoAuditoria.registrarLog(
-				"Sistema",
-				"ERRO_EMAIL",
-				"Gestão Usuários",
-				"Falha ao enviar email para " + user.getEmail(),
-				EnumNivelAuditoria.AVISO,
-				"127.0.0.1"
-			);
-		}		
+        CompletableFuture.runAsync(() -> {
+			try {
+				enviarEmailAprovacao(user.getEmail(), user.getNome(), link);
+			} catch (Exception e) {
+				System.err.println("AVISO: Falha assíncrona ao enviar e-mail: " + e.getMessage());
+				servicoAuditoria.registrarLog(
+					"Sistema",
+					"ERRO_EMAIL",
+					"Gestão Usuários",
+					"Falha ao enviar email (background) para " + user.getEmail(),
+					EnumNivelAuditoria.AVISO,
+					"127.0.0.1"
+				);
+			}
+		});
     }
 
     private void enviarEmailAprovacao(String destinatario, String nome, String link) {
