@@ -12,6 +12,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Example;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -43,6 +44,8 @@ public class ServicoUser {
     private InstituicaoRepository instituicaoRepository;
     @Autowired
     private ServicoAuditoria servicoAuditoria;
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
 
     /*
     * permite que sejam passados parâmetros na forma de string, case-insensitive, para qualquer um dos enuns de user
@@ -200,7 +203,7 @@ public class ServicoUser {
 
         tokenRepository.save(resetToken);
 
-        String link = "http://127.0.0.1:5500/app/authentication/redefinir_senha.html?token=" + token;
+        String link = frontendUrl + "/app/authentication/redefinir_senha.html?token=" + token;
         enviarEmail(userAbstract.getEmail(), link, token);
     }
 
@@ -463,7 +466,7 @@ public class ServicoUser {
         confirmToken.setExpiration(LocalDateTime.now().plusDays(2));
         tokenRepository.save(confirmToken);
 
-        String link = "http://localhost:63342/app/authentication/finalizar-cadastro.html?token=" + token;
+        String link = frontendUrl + "/app/authentication/finalizar-cadastro.html?token=" + token;
         enviarEmailAprovacao(user.getEmail(), user.getNome(), link);
     }
 
