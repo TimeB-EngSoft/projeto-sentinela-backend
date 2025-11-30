@@ -8,7 +8,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin(origins = {"http://127.0.0.1:5500", "http://localhost:5500"}, allowedHeaders = "*")
+@CrossOrigin(origins = {
+    "http://127.0.0.1:5500", 
+    "http://localhost:5500", 
+    "https://projeto-sentinela-frontend.vercel.app" 
+}, allowedHeaders = "*")
 @RestController
 @RequestMapping("/relatorios")
 public class ControladorRelatorios {
