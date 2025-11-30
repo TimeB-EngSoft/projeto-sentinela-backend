@@ -190,6 +190,13 @@ public class ServicoUser {
         if (user.isEmpty()) {
             throw new RuntimeException("Usuário não encontrado para o email: " + email);
         }
+        if (user.get().getStatus().equals(EnumUsuarioStatus.PENDENTE)) {
+            throw new RuntimeException("Seu acesso ainda não foi aceito");
+        }
+
+        if (user.get().getStatus().equals(EnumUsuarioStatus.INATIVO)) {
+            throw new RuntimeException("Seu perfil está inativado, para mais informações, contate o gestor");
+        }
 
         UserAbstract userAbstract = user.get();
 
