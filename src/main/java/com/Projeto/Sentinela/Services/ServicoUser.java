@@ -211,7 +211,7 @@ public class ServicoUser {
 
         tokenRepository.save(resetToken);
 
-        String link = frontendUrl + "app/authentication/redefinir_senha.html?token=" + token;
+        String link = frontendUrl + "/app/authentication/redefinir_senha.html?token=" + token;
         enviarEmail(userAbstract.getEmail(), link, token);
     }
 
@@ -474,7 +474,7 @@ public class ServicoUser {
         confirmToken.setExpiration(LocalDateTime.now().plusDays(2));
         tokenRepository.save(confirmToken);
 
-        String link = frontendUrl + "app/authentication/finalizar-cadastro.html?token=" + token;
+        String link = frontendUrl + "/app/authentication/finalizar-cadastro.html?token=" + token;
         CompletableFuture.runAsync(() -> {
 			try {
 				enviarEmailAprovacao(user.getEmail(), user.getNome(), link);
