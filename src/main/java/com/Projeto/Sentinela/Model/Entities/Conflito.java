@@ -5,7 +5,6 @@ import com.Projeto.Sentinela.Model.Enums.EnumPrioridade;
 import com.Projeto.Sentinela.Model.Enums.EnumStatusConflito;
 import com.Projeto.Sentinela.Model.Enums.EnumTipoDeDenuncia;
 import jakarta.persistence.*;
-import jakarta.persistence.CascadeType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -41,7 +40,7 @@ public class Conflito {
     private Localizacao localizacao;
 
     @ManyToOne
-    @JoinColumn(name = "id_Instituição", referencedColumnName = "id")
+    @JoinColumn(name = "id_instituicao", referencedColumnName = "id") 
     private Instituicao instituicao;
 
     @OneToOne
