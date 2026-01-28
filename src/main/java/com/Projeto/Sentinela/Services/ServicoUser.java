@@ -43,7 +43,7 @@ public class ServicoUser {
     private ServicoAuditoria servicoAuditoria;
     @Value("${app.frontend.url}")
     private String frontendUrl;
-	@Autowired
+	@Autowired(required = false)
     private GmailEmailService gmailEmailService;
 
 
@@ -217,15 +217,18 @@ public class ServicoUser {
 	public void enviarEmailRecuperacao(String destinatario, String nomeUsuario, String link, String token) {
         String template = carregarTemplateEmail("/templates/email/email-recuperacao.html", nomeUsuario, link, token);
         String assunto = "🔒 Redefinição de Senha - Projeto Sentinela";
-        gmailEmailService.enviarEmail(destinatario, assunto, template);
+        if (gmailEmailService != null) {
+            gmailEmailService.enviarEmail(destinatario, assunto, template);
+        }
     }
 
    public void enviarEmail(String destinatario, String nomeUsuario, String link, String token) {
         String template = carregarTemplateEmail("/templates/email/email-recuperacao.html", nomeUsuario, link, token);
         
         String assunto = "🔒 Redefinição de Senha - Projeto Sentinela";
-        gmailEmailService.enviarEmail(destinatario, assunto, template);
-    }
+       if (gmailEmailService != null) {
+           gmailEmailService.enviarEmail(destinatario, assunto, template);
+       }    }
 
     private String carregarTemplateEmail(String caminhoTemplate, String nome, String link, String token) {
         try (InputStream inputStream = getClass().getResourceAsStream(caminhoTemplate)) {
@@ -479,8 +482,9 @@ public class ServicoUser {
         // Passa o template de CADASTRO e string vazia para o token (pois não usa token visual)
         String corpoHtml = carregarTemplateEmail("/templates/email/email-cadastro.html", nome, link, ""); 
         String assunto = "✅ Cadastro Aprovado - Projeto Sentinela";
-        gmailEmailService.enviarEmail(destinatario, assunto, corpoHtml);
-    }
+         if (gmailEmailService != null) {
+             gmailEmailService.enviarEmail(destinatario, assunto, corpoHtml);
+         }    }
 
     public List<UpUserDTO> listarUsuariosOtimizado(String statusStr, Long instituicaoId, String cargoStr, String filtroEspecial) {
 

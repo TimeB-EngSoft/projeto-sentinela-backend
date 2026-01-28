@@ -1,3 +1,5 @@
+
+
 package com.Projeto.Sentinela.Services;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
@@ -29,12 +31,8 @@ import java.security.GeneralSecurityException;
 import java.util.Base64;
 import java.util.Properties;
 
+
 @Service
-@ConditionalOnProperty(
-        name = "email.enabled",
-        havingValue = "true",
-        matchIfMissing = false
-)
 public class GmailEmailService {
     @Value("${gmail.client.id}")
     private String clientId;
