@@ -8,16 +8,12 @@ import com.Projeto.Sentinela.Model.Enums.EnumUsuarioStatus;
 import com.Projeto.Sentinela.Model.Repositories.InstituicaoRepository;
 import com.Projeto.Sentinela.Model.Repositories.PasswordResetTokenRepository;
 import com.Projeto.Sentinela.Model.Repositories.UserRepository;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import java.util.concurrent.CompletableFuture;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,46 +23,55 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class ServicoUser {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PasswordResetTokenRepository tokenRepository;
+    private final InstituicaoRepository instituicaoRepository;
+    private final ServicoAuditoria servicoAuditoria;
+    private final ObjectProvider<GmailEmailService> gmailEmailServiceProvider;
 
-    @Autowired
-    private PasswordResetTokenRepository tokenRepository;
-
-    @Autowired
-    private InstituicaoRepository instituicaoRepository;
-    @Autowired
-    private ServicoAuditoria servicoAuditoria;
     @Value("${app.frontend.url}")
     private String frontendUrl;
-	@Autowired(required = false)
-    private GmailEmailService gmailEmailService;
 
+    // Construtor para injeção (Spring vai injetar automaticamente)
+    public ServicoUser(
+            UserRepository userRepository,
+            PasswordResetTokenRepository tokenRepository,
+            InstituicaoRepository instituicaoRepository,
+            ServicoAuditoria servicoAuditoria,
+            ObjectProvider<GmailEmailService> gmailEmailServiceProvider
+    ) {
+        this.userRepository = userRepository;
+        this.tokenRepository = tokenRepository;
+        this.instituicaoRepository = instituicaoRepository;
+        this.servicoAuditoria = servicoAuditoria;
+        this.gmailEmailServiceProvider = gmailEmailServiceProvider;
+    }
 
     /*
-    * permite que sejam passados parâmetros na forma de string, case-insensitive, para qualquer um dos enuns de user
-    * */
-    public  Enum<?> enumConverter(String tipo){
-        try{
+     * permite que sejam passados parâmetros na forma de string, case-insensitive, para qualquer um dos enums de user
+     */
+    public Enum<?> enumConverter(String tipo) {
+        try {
             EnumCargo c = EnumCargo.valueOf(tipo.toUpperCase());
             return c;
-        }catch(IllegalArgumentException e){
-            try{
+        } catch (IllegalArgumentException e) {
+            try {
                 EnumUsuarioStatus s = EnumUsuarioStatus.valueOf(tipo.toUpperCase());
                 return s;
-            }catch(IllegalArgumentException ex){
+            } catch (IllegalArgumentException ex) {
                 throw new RuntimeException("Tipo passado não corresponde aos existentes");
             }
         }
     }
 
-    public List<UpUserDTO> listUserByStatus(String status){
+    public List<UpUserDTO> listUserByStatus(String status) {
 
-        if(enumConverter(status) instanceof EnumUsuarioStatus){
+        if (enumConverter(status) instanceof EnumUsuarioStatus) {
             EnumUsuarioStatus eu = (EnumUsuarioStatus) enumConverter(status);
             UserAbstract u = new UsuarioInstituicao();
             u.setStatus(eu);
@@ -77,39 +82,39 @@ public class ServicoUser {
             UserAbstract us = new UsuarioSecretaria();
             us.setStatus(eu);
 
+            var ex1 = org.springframework.data.domain.Example.of(u);
+            var ex2 = org.springframework.data.domain.Example.of(g);
+            var ex3 = org.springframework.data.domain.Example.of(gs);
+            var ex4 = org.springframework.data.domain.Example.of(us);
 
-            Example<UserAbstract> ex1 = Example.of(u);
-            Example<UserAbstract> ex2 = Example.of(g);
-            Example<UserAbstract> ex3 = Example.of(gs);
-            Example<UserAbstract> ex4 = Example.of(us);
             List<UserAbstract> list = userRepository.findAll(ex1);
             list.addAll(userRepository.findAll(ex2));
             list.addAll(userRepository.findAll(ex3));
             list.addAll(userRepository.findAll(ex4));
-            if(list.isEmpty()){
+            if (list.isEmpty()) {
                 throw new RuntimeException("Não há usuários com este status");
             }
 
             List<UpUserDTO> listDTO = list.stream().map(user -> {
                 UpUserDTO dto = new UpUserDTO();
-                dto.setId(user.getId()); 
+                dto.setId(user.getId());
                 dto.setNome(user.getNome());
                 dto.setEmail(user.getEmail());
                 dto.setTelefone(user.getTelefone());
                 dto.setDataNascimento(Optional.ofNullable(user.getDataNascimento())
-                            .map(LocalDate::toString)
-                            .orElse(null));
+                        .map(LocalDate::toString)
+                        .orElse(null));
                 dto.setCpf(user.getCpf());
                 dto.setCargo(user.getCargo());
                 dto.setStatus(user.getStatus());
                 dto.setInstituicaoNome(Optional.ofNullable(user.getInstituicao())
-                            .map(Instituicao::getNome)
-                            .orElse(null));
+                        .map(Instituicao::getNome)
+                        .orElse(null));
                 return dto;
             }).toList();
-            
+
             return listDTO;
-        }else{
+        } else {
             throw new RuntimeException("Argumento inválido");
         }
 
@@ -176,12 +181,9 @@ public class ServicoUser {
         }
     }
 
-
-    public UserAbstract getData (long id){
-        UserAbstract a = userRepository.findById(id).orElseThrow(()-> new RuntimeException("Usuário não encontrado"));
-        return a;
+    public UserAbstract getData(long id) {
+        return userRepository.findById(id).orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
     }
-
 
     @Transactional
     public void solicitarRecuperarSenha(String email) {
@@ -213,22 +215,53 @@ public class ServicoUser {
         String link = frontendUrl + "/app/authentication/redefinir_senha.html?token=" + token;
         enviarEmail(userAbstract.getEmail(), userAbstract.getNome(), link, token);
     }
-	
-	public void enviarEmailRecuperacao(String destinatario, String nomeUsuario, String link, String token) {
+
+    public void enviarEmailRecuperacao(String destinatario, String nomeUsuario, String link, String token) {
         String template = carregarTemplateEmail("/templates/email/email-recuperacao.html", nomeUsuario, link, token);
         String assunto = "🔒 Redefinição de Senha - Projeto Sentinela";
-        if (gmailEmailService != null) {
-            gmailEmailService.enviarEmail(destinatario, assunto, template);
+        GmailEmailService mailSvc = gmailEmailServiceProvider.getIfAvailable();
+        if (mailSvc != null) {
+            try {
+                mailSvc.enviarEmail(destinatario, assunto, template);
+            } catch (Exception e) {
+                System.err.println("AVISO: Falha ao enviar email de recuperação (ignorado): " + e.getMessage());
+                servicoAuditoria.registrarLog(
+                        "Sistema",
+                        "ERRO_EMAIL",
+                        "Recuperação de Senha",
+                        "Falha ao enviar email (ignorado) para " + destinatario,
+                        EnumNivelAuditoria.AVISO,
+                        "127.0.0.1"
+                );
+            }
+        } else {
+            // opcional: registrar no log que email está desligado
+            System.out.println("INFO: gmailEmailService indisponível — email de recuperação não será enviado para " + destinatario);
         }
     }
 
-   public void enviarEmail(String destinatario, String nomeUsuario, String link, String token) {
+    public void enviarEmail(String destinatario, String nomeUsuario, String link, String token) {
         String template = carregarTemplateEmail("/templates/email/email-recuperacao.html", nomeUsuario, link, token);
-        
         String assunto = "🔒 Redefinição de Senha - Projeto Sentinela";
-       if (gmailEmailService != null) {
-           gmailEmailService.enviarEmail(destinatario, assunto, template);
-       }    }
+        GmailEmailService mailSvc = gmailEmailServiceProvider.getIfAvailable();
+        if (mailSvc != null) {
+            try {
+                mailSvc.enviarEmail(destinatario, assunto, template);
+            } catch (Exception e) {
+                System.err.println("AVISO: Falha ao enviar email (ignorado): " + e.getMessage());
+                servicoAuditoria.registrarLog(
+                        "Sistema",
+                        "ERRO_EMAIL",
+                        "Recuperação de Senha",
+                        "Falha ao enviar email (ignorado) para " + destinatario,
+                        EnumNivelAuditoria.AVISO,
+                        "127.0.0.1"
+                );
+            }
+        } else {
+            System.out.println("INFO: gmailEmailService indisponível — email não será enviado para " + destinatario);
+        }
+    }
 
     private String carregarTemplateEmail(String caminhoTemplate, String nome, String link, String token) {
         try (InputStream inputStream = getClass().getResourceAsStream(caminhoTemplate)) {
@@ -238,10 +271,10 @@ public class ServicoUser {
             }
 
             String template = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            
-            if(nome != null) template = template.replace("${userName}", nome);
-            if(link != null) template = template.replace("${redirectUrl}", link);
-            if(token != null) template = template.replace("${token}", token);
+
+            if (nome != null) template = template.replace("${userName}", nome);
+            if (link != null) template = template.replace("${redirectUrl}", link);
+            if (token != null) template = template.replace("${token}", token);
 
             return template;
 
@@ -269,65 +302,71 @@ public class ServicoUser {
     }
 
     @Transactional
-	public void cadastroParcial(String nome, String email, String instituicao, String cargo, String justificativa) {
-    
-    
-    if (userRepository.findByEmail(email).isPresent()) {
-        throw new RuntimeException("E-mail já cadastrado.");
-    }
+    public void cadastroParcial(String nome, String email, String instituicao, String cargo, String justificativa) {
 
-   
-    EnumCargo enumCargo;
-    try {
-        String cargoEnumKey = cargo.toUpperCase()
-                                  .replace(" DA ", " ")
-                                  .replace(" DE ", " ")
-                                  .replace(" ", "_");
-        enumCargo = EnumCargo.valueOf(cargoEnumKey);
-    } catch (Exception e) {
-        throw new IllegalArgumentException("Cargo inválido fornecido: " + cargo);
-    }
-
-    UserAbstract usuario;
-    switch (enumCargo) {
-        case GESTOR_SECRETARIA: usuario = new GestorSecretaria(); break;
-        case GESTOR_INSTITUICAO: usuario = new GestorInstituicao(); break;
-        case USUARIO_SECRETARIA: usuario = new UsuarioSecretaria(); break;
-        case USUARIO_INSTITUICAO: usuario = new UsuarioInstituicao(); break;
-        default:
-            throw new IllegalArgumentException("Cargo não suportado: " + enumCargo);
-    }
-
-    usuario.setNome(nome);
-    usuario.setEmail(email);
-    usuario.setCargo(enumCargo); 
-    usuario.setJustificativa(justificativa);
-    usuario.setStatus(EnumUsuarioStatus.PENDENTE);
-    usuario.setDataCadastro(LocalDateTime.now());
-
-    if (enumCargo == EnumCargo.GESTOR_INSTITUICAO || enumCargo == EnumCargo.USUARIO_INSTITUICAO) {
-        
-        if (instituicao == null || instituicao.trim().isEmpty()) {
-            throw new RuntimeException("O cargo " + cargo + " exige uma instituição.");
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new RuntimeException("E-mail já cadastrado.");
         }
 
-        System.out.println("🔍 Procurando instituição com nome: " + instituicao);
-        Instituicao instituicaoEncontrada = instituicaoRepository.findByNomeContainingIgnoreCase(instituicao);
-
-        if (instituicaoEncontrada == null) {
-            throw new RuntimeException("Instituição não encontrada: " + instituicao);
+        EnumCargo enumCargo;
+        try {
+            String cargoEnumKey = cargo.toUpperCase()
+                    .replace(" DA ", " ")
+                    .replace(" DE ", " ")
+                    .replace(" ", "_");
+            enumCargo = EnumCargo.valueOf(cargoEnumKey);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Cargo inválido fornecido: " + cargo);
         }
-        usuario.setInstituicao(instituicaoEncontrada);
-    }
 
-    userRepository.save(usuario);
-}
+        UserAbstract usuario;
+        switch (enumCargo) {
+            case GESTOR_SECRETARIA:
+                usuario = new GestorSecretaria();
+                break;
+            case GESTOR_INSTITUICAO:
+                usuario = new GestorInstituicao();
+                break;
+            case USUARIO_SECRETARIA:
+                usuario = new UsuarioSecretaria();
+                break;
+            case USUARIO_INSTITUICAO:
+                usuario = new UsuarioInstituicao();
+                break;
+            default:
+                throw new IllegalArgumentException("Cargo não suportado: " + enumCargo);
+        }
+
+        usuario.setNome(nome);
+        usuario.setEmail(email);
+        usuario.setCargo(enumCargo);
+        usuario.setJustificativa(justificativa);
+        usuario.setStatus(EnumUsuarioStatus.PENDENTE);
+        usuario.setDataCadastro(LocalDateTime.now());
+
+        if (enumCargo == EnumCargo.GESTOR_INSTITUICAO || enumCargo == EnumCargo.USUARIO_INSTITUICAO) {
+
+            if (instituicao == null || instituicao.trim().isEmpty()) {
+                throw new RuntimeException("O cargo " + cargo + " exige uma instituição.");
+            }
+
+            System.out.println("🔍 Procurando instituição com nome: " + instituicao);
+            Instituicao instituicaoEncontrada = instituicaoRepository.findByNomeContainingIgnoreCase(instituicao);
+
+            if (instituicaoEncontrada == null) {
+                throw new RuntimeException("Instituição não encontrada: " + instituicao);
+            }
+            usuario.setInstituicao(instituicaoEncontrada);
+        }
+
+        userRepository.save(usuario);
+    }
 
     public void cadastroCompleto(String token, String senha, String telefone, String dataNascimento, String cpf) {
         // Encontra o token no banco
         PasswordResetToken resetToken = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Token inválido ou expirado."));
-        
+
         // Verifica se o token expirou
         if (resetToken.isExpired()) {
             tokenRepository.delete(resetToken);
@@ -336,10 +375,6 @@ public class ServicoUser {
 
         UserAbstract user = resetToken.getUsuario();
 
-        // if (user.getStatus() != EnumUsuarioStatus.PENDENTE) {
-        //    throw new RuntimeException("Este cadastro não está pendente de finalização.");
-        //}
-        
         user.setSenha(senha);
         user.setTelefone(telefone);
         user.setDataNascimento(LocalDate.parse(dataNascimento));
@@ -348,11 +383,10 @@ public class ServicoUser {
         user.setDataAtualizacao(LocalDateTime.now());
 
         userRepository.save(user);
-        
+
         // Importante: Deleta o token após o uso
         tokenRepository.delete(resetToken);
     }
-
 
     public UserAbstract login(String email, String senha) {
         UserAbstract usuario = userRepository.findByEmail(email)
@@ -414,19 +448,19 @@ public class ServicoUser {
         // Se encontrou e não expirou, o token é válido.
         return true;
     }
-	
-	public void atualizarSenha(Long id, String senhaAtual, String novaSenha) {
-    UserAbstract user = userRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-    if (!user.getSenha().equals(senhaAtual)) {
-        throw new RuntimeException("Senha atual incorreta");
+    public void atualizarSenha(Long id, String senhaAtual, String novaSenha) {
+        UserAbstract user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        if (!user.getSenha().equals(senhaAtual)) {
+            throw new RuntimeException("Senha atual incorreta");
+        }
+
+        user.setSenha(novaSenha);
+        user.setDataAtualizacao(LocalDateTime.now());
+        userRepository.save(user);
     }
-
-    user.setSenha(novaSenha);
-    user.setDataAtualizacao(LocalDateTime.now());
-    userRepository.save(user);
-	}
 
     @Transactional
     public void aprovarOuRecusarCadastro(Long id, boolean aprovado) {
@@ -462,29 +496,44 @@ public class ServicoUser {
 
         String link = frontendUrl + "/app/authentication/finalizar-cadastro.html?token=" + token;
         CompletableFuture.runAsync(() -> {
-			try {
-				enviarEmailAprovacao(user.getEmail(), user.getNome(), link);
-			} catch (Exception e) {
-				System.err.println("AVISO: Falha assíncrona ao enviar e-mail: " + e.getMessage());
-				servicoAuditoria.registrarLog(
-					"Sistema",
-					"ERRO_EMAIL",
-					"Gestão Usuários",
-					"Falha ao enviar email (background) para " + user.getEmail(),
-					EnumNivelAuditoria.AVISO,
-					"127.0.0.1"
-				);
-			}
-		});
+            try {
+                enviarEmailAprovacao(user.getEmail(), user.getNome(), link);
+            } catch (Exception e) {
+                System.err.println("AVISO: Falha assíncrona ao enviar e-mail: " + e.getMessage());
+                servicoAuditoria.registrarLog(
+                        "Sistema",
+                        "ERRO_EMAIL",
+                        "Gestão Usuários",
+                        "Falha ao enviar email (background) para " + user.getEmail(),
+                        EnumNivelAuditoria.AVISO,
+                        "127.0.0.1"
+                );
+            }
+        });
     }
 
-     private void enviarEmailAprovacao(String destinatario, String nome, String link) {
-        // Passa o template de CADASTRO e string vazia para o token (pois não usa token visual)
-        String corpoHtml = carregarTemplateEmail("/templates/email/email-cadastro.html", nome, link, ""); 
+    private void enviarEmailAprovacao(String destinatario, String nome, String link) {
+        String corpoHtml = carregarTemplateEmail("/templates/email/email-cadastro.html", nome, link, "");
         String assunto = "✅ Cadastro Aprovado - Projeto Sentinela";
-         if (gmailEmailService != null) {
-             gmailEmailService.enviarEmail(destinatario, assunto, corpoHtml);
-         }    }
+        GmailEmailService mailSvc = gmailEmailServiceProvider.getIfAvailable();
+        if (mailSvc != null) {
+            try {
+                mailSvc.enviarEmail(destinatario, assunto, corpoHtml);
+            } catch (Exception e) {
+                System.err.println("AVISO: Falha ao enviar email de aprovação (ignorado): " + e.getMessage());
+                servicoAuditoria.registrarLog(
+                        "Sistema",
+                        "ERRO_EMAIL",
+                        "Gestão Usuários",
+                        "Falha ao enviar email (ignorado) para " + destinatario,
+                        EnumNivelAuditoria.AVISO,
+                        "127.0.0.1"
+                );
+            }
+        } else {
+            System.out.println("INFO: gmailEmailService indisponível — email de aprovação não será enviado para " + destinatario);
+        }
+    }
 
     public List<UpUserDTO> listarUsuariosOtimizado(String statusStr, Long instituicaoId, String cargoStr, String filtroEspecial) {
 
@@ -502,9 +551,9 @@ public class ServicoUser {
         if (cargoStr != null && !cargoStr.isBlank()) {
             try {
                 cargosFiltrados = List.of(EnumCargo.valueOf(cargoStr));
-            } catch (Exception e) { }
-        }
-        else if ("GESTORES".equalsIgnoreCase(filtroEspecial)) {
+            } catch (Exception e) {
+            }
+        } else if ("GESTORES".equalsIgnoreCase(filtroEspecial)) {
             cargosFiltrados = List.of(EnumCargo.GESTOR_SECRETARIA, EnumCargo.GESTOR_INSTITUICAO);
         }
 
