@@ -8,7 +8,6 @@ import com.google.api.services.gmail.model.Message;
 
 import jakarta.activation.DataHandler;
 import jakarta.activation.DataSource;
-import jakarta.activation.ByteArrayDataSource;
 import jakarta.mail.Multipart;
 import jakarta.mail.Session;
 import jakarta.mail.internet.InternetAddress;
@@ -16,6 +15,7 @@ import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
 
+import jakarta.mail.util.ByteArrayDataSource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.ClassPathResource;
