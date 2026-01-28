@@ -18,6 +18,7 @@ import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,11 @@ import java.util.Base64;
 import java.util.Properties;
 
 @Service
+@ConditionalOnProperty(
+        name = "email.enabled",
+        havingValue = "true",
+        matchIfMissing = false
+)
 public class GmailEmailService {
     @Value("${gmail.client.id}")
     private String clientId;
