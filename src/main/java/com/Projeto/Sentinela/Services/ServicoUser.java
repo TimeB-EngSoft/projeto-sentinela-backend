@@ -15,10 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Example;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import java.util.concurrent.CompletableFuture;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,13 +38,14 @@ public class ServicoUser {
     private PasswordResetTokenRepository tokenRepository;
 
     @Autowired
-    private JavaMailSender mailSender;
-    @Autowired
     private InstituicaoRepository instituicaoRepository;
     @Autowired
     private ServicoAuditoria servicoAuditoria;
     @Value("${app.frontend.url}")
     private String frontendUrl;
+	@Autowired
+    private GmailEmailService gmailEmailService;
+
 
     /*
     * permite que sejam passados parâmetros na forma de string, case-insensitive, para qualquer um dos enuns de user
@@ -211,54 +211,38 @@ public class ServicoUser {
         tokenRepository.save(resetToken);
 
         String link = frontendUrl + "/app/authentication/redefinir_senha.html?token=" + token;
-        enviarEmail(userAbstract.getEmail(), link, token);
+        enviarEmail(userAbstract.getEmail(), userAbstract.getNome(), link, token);
+    }
+	
+	public void enviarEmailRecuperacao(String destinatario, String nomeUsuario, String link, String token) {
+        String template = carregarTemplateEmail("/templates/email/email-recuperacao.html", nomeUsuario, link, token);
+        String assunto = "🔒 Redefinição de Senha - Projeto Sentinela";
+        gmailEmailService.enviarEmail(destinatario, assunto, template);
     }
 
-    public void enviarEmail(String destinatario, String link, String token) {
-        try {
-            MimeMessage mensagem = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mensagem, true, "UTF-8");
-
-            UserAbstract user = userRepository.findUserAbstractByEmail(destinatario);
-            helper.setTo(destinatario);
-            helper.setSubject("🔒 Redefinição de Senha - Projeto Sentinela");
-
-            String corpoHtml = carregarTemplateEmail(user.getNome(), link, token);
-            helper.setText(corpoHtml, true);
-
-            ClassPathResource logo = new ClassPathResource("static/images/ProjetoSentinelaLogo.png");
-            if (logo.exists()) {
-                helper.addInline("logoSentinela", logo);
-            } else {
-                System.err.println("⚠️ Logo não encontrada no caminho: static/images/ProjetoSentinelaLogo.png");
-            }
-
-            mailSender.send(mensagem);
-            System.out.println("✅ E-mail de recuperação enviado com sucesso para " + destinatario);
-
-        } catch (MessagingException e) {
-            System.err.println("❌ Erro ao enviar e-mail: " + e.getMessage());
-            throw new RuntimeException("Erro ao enviar e-mail de recuperação de senha", e);
-        }
+   public void enviarEmail(String destinatario, String nomeUsuario, String link, String token) {
+        String template = carregarTemplateEmail("/templates/email/email-recuperacao.html", nomeUsuario, link, token);
+        
+        String assunto = "🔒 Redefinição de Senha - Projeto Sentinela";
+        gmailEmailService.enviarEmail(destinatario, assunto, template);
     }
 
-    private String carregarTemplateEmail(String nome, String link, String token) {
-        try (InputStream inputStream = getClass().getResourceAsStream("/templates/email/email-recuperacao.html")) {
+    private String carregarTemplateEmail(String caminhoTemplate, String nome, String link, String token) {
+        try (InputStream inputStream = getClass().getResourceAsStream(caminhoTemplate)) {
 
             if (inputStream == null) {
-                throw new RuntimeException("Template de e-mail não encontrado em /templates/email/email-recuperacao.html");
+                throw new RuntimeException("Template de e-mail não encontrado em: " + caminhoTemplate);
             }
 
             String template = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            template = template.replace("${userName}", nome);
-            template = template.replace("${redirectUrl}", link);
-            template = template.replace("${token}", token);
+            
+            if(nome != null) template = template.replace("${userName}", nome);
+            if(link != null) template = template.replace("${redirectUrl}", link);
+            if(token != null) template = template.replace("${token}", token);
 
-            System.out.println("✅ Template de e-mail carregado com sucesso!");
             return template;
 
         } catch (IOException e) {
-            System.err.println("❌ Erro ao ler template de e-mail: " + e.getMessage());
             throw new RuntimeException("Erro ao ler template de e-mail", e);
         }
     }
@@ -474,45 +458,28 @@ public class ServicoUser {
         tokenRepository.save(confirmToken);
 
         String link = frontendUrl + "/app/authentication/finalizar-cadastro.html?token=" + token;
-        enviarEmailAprovacao(user.getEmail(), user.getNome(), link);
+        CompletableFuture.runAsync(() -> {
+			try {
+				enviarEmailAprovacao(user.getEmail(), user.getNome(), link);
+			} catch (Exception e) {
+				System.err.println("AVISO: Falha assíncrona ao enviar e-mail: " + e.getMessage());
+				servicoAuditoria.registrarLog(
+					"Sistema",
+					"ERRO_EMAIL",
+					"Gestão Usuários",
+					"Falha ao enviar email (background) para " + user.getEmail(),
+					EnumNivelAuditoria.AVISO,
+					"127.0.0.1"
+				);
+			}
+		});
     }
 
-    private void enviarEmailAprovacao(String destinatario, String nome, String link) {
-        try {
-            MimeMessage mensagem = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mensagem, true, "UTF-8");
-
-            helper.setTo(destinatario);
-            helper.setSubject("✅ Cadastro Aprovado - Projeto Sentinela");
-
-            // 🔹 Carrega o HTML do template
-            String corpoHtml;
-            try (InputStream inputStream = getClass().getResourceAsStream("/templates/email/email-cadastro.html")) {
-                if (inputStream == null) {
-                    throw new RuntimeException("Template de e-mail não encontrado em /templates/email/email-cadastro.html");
-                }
-
-                corpoHtml = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-                corpoHtml = corpoHtml.replace("${userName}", nome);
-                corpoHtml = corpoHtml.replace("${redirectUrl}", link);
-            }
-
-            helper.setText(corpoHtml, true);
-
-            // 🔹 Adiciona logo inline
-            ClassPathResource logo = new ClassPathResource("static/images/ProjetoSentinelaLogo.png");
-            if (logo.exists()) {
-                helper.addInline("logoSentinela", logo);
-            } else {
-                System.err.println("⚠️ Logo não encontrada no caminho: static/images/ProjetoSentinelaLogo.png");
-            }
-
-            mailSender.send(mensagem);
-            System.out.println("✅ E-mail de aprovação enviado para " + destinatario);
-
-        } catch (Exception e) {
-            throw new RuntimeException("Erro ao enviar e-mail de aprovação: " + e.getMessage());
-        }
+     private void enviarEmailAprovacao(String destinatario, String nome, String link) {
+        // Passa o template de CADASTRO e string vazia para o token (pois não usa token visual)
+        String corpoHtml = carregarTemplateEmail("/templates/email/email-cadastro.html", nome, link, ""); 
+        String assunto = "✅ Cadastro Aprovado - Projeto Sentinela";
+        gmailEmailService.enviarEmail(destinatario, assunto, corpoHtml);
     }
 
     public List<UpUserDTO> listarUsuariosOtimizado(String statusStr, Long instituicaoId, String cargoStr, String filtroEspecial) {

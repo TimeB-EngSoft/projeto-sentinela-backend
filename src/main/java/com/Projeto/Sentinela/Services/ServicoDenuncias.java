@@ -36,6 +36,7 @@ public class ServicoDenuncias {
     /**
      * Registra uma denúncia vinda de um formulário público (sem login).
      */
+
     public Denuncia registrarDenunciaExterna(DenunciaDTO dto) {
         Denuncia denuncia = new Denuncia();
 
@@ -104,7 +105,7 @@ public class ServicoDenuncias {
             loc.setComplemento(compl);
 
             // Salva explicitamente a localização antes de associar
-            localizacaoRepository.save(loc);
+            loc = localizacaoRepository.save(loc); 
             denuncia.setLocalizacao(loc);
         }
 
